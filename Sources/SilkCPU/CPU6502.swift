@@ -74,69 +74,69 @@ extension CPU6502 {
     }
     
     mutating func executeLDA(zeropage oper: UInt8) {
-        ac = fetchZeroPage(oper)
+        ac = loadZeroPage(oper)
     }
     
     mutating func executeLDA(zeropageX oper: UInt8) {
-        ac = fetchZeroPage(oper &+ xr)
+        ac = loadZeroPage(oper &+ xr)
     }
     
     mutating func executeLDA(absolute oper: UInt16) {
         let address = oper
-        ac = fetch(address)
+        ac = load(address)
     }
     
     mutating func executeLDA(absoluteX oper: UInt16) {
         let address = oper &+ UInt16(xr)
-        ac = fetch(address)
+        ac = load(address)
     }
     
     mutating func executeLDA(absoluteY oper: UInt16) {
         let address = oper &+ UInt16(yr)
-        ac = fetch(address)
+        ac = load(address)
     }
     
     mutating func executeLDA(indirectX oper: UInt16) {
         let ptr = oper &+ UInt16(xr)
-        let low = fetch(ptr)
-        let high = fetchNext(ptr)
-        ac = fetch(high, low)
+        let low = load(ptr)
+        let high = loadNext(ptr)
+        ac = load(high, low)
     }
     
     mutating func executeLDA(indirectY oper: UInt16) {
         let ptr = oper
-        let low = fetch(ptr)
-        let high = fetchNext(ptr)
+        let low = load(ptr)
+        let high = loadNext(ptr)
         let address = UInt16(high: high, low: low) &+ UInt16(yr)
-        ac = fetch(address)
+        ac = load(address)
     }
 }
 
 extension CPU6502 {
-    nonisolated(unsafe) static var fetch: (UInt8, UInt8) -> UInt8 = { addressHigh, addressLow in
+    nonisolated(unsafe) static var load: (UInt8, UInt8) -> UInt8 = { addressHigh, addressLow in
         return (addressHigh & 0xF0) | (addressLow & 0x0F)
     }
     
-    func fetchNext(_ address: UInt16) -> UInt8 {
-        return fetch(address &+ 1)
+    func loadNext(_ address: UInt16) -> UInt8 {
+        return load(address &+ 1)
     }
     
-    func fetchNext(_ addressHigh: UInt8, _ addressLow: UInt8) -> UInt8 {
-        return fetchNext((UInt16(addressHigh) << 8) &+ UInt16(addressLow))
+    func loadNext(_ addressHigh: UInt8, _ addressLow: UInt8) -> UInt8 {
+        return loadNext((UInt16(addressHigh) << 8) &+ UInt16(addressLow))
     }
     
-    func fetchZeroPage(_ address: UInt8) -> UInt8 {
-        return fetch(0x00, address)
+    func loadZeroPage(_ address: UInt8) -> UInt8 {
+        return load(0x00, address)
     }
     
-    func fetch(_ address: UInt16) -> UInt8 {
+    func load(_ address: UInt16) -> UInt8 {
         let addressLow = UInt8(address & 0x00FF)
         let addressHigh = UInt8((address & 0xFF00) >> 8)
-        return fetch(addressHigh, addressLow)
+        return load(addressHigh, addressLow)
     }
     
-    func fetch(_ addressHigh: UInt8, _ addressLow: UInt8) -> UInt8 {
-        return CPU6502.fetch(addressHigh, addressLow)
+    func load(_ addressHigh: UInt8, _ addressLow: UInt8) -> UInt8 {
+        return CPU6502.load(addressHigh, addressLow)
     }
 }
 
