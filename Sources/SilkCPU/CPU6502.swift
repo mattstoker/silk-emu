@@ -42,14 +42,23 @@ extension CPU6502 {
 }
 
 extension CPU6502 {
-    var srN: Bool { sr & 0b10000000 != 0 }
-    var srV: Bool { sr & 0b01000000 != 0 }
-    var srX: Bool { sr & 0b00100000 != 0 }
-    var srB: Bool { sr & 0b00010000 != 0 }
-    var srD: Bool { sr & 0b00001000 != 0 }
-    var srI: Bool { sr & 0b00000100 != 0 }
-    var srZ: Bool { sr & 0b00000010 != 0 }
-    var srC: Bool { sr & 0b00000001 != 0 }
+    static let srNMask: UInt8 = 0b10000000
+    static let srVMask: UInt8 = 0b01000000
+    static let srXMask: UInt8 = 0b00100000
+    static let srBMask: UInt8 = 0b00010000
+    static let srDMask: UInt8 = 0b00001000
+    static let srIMask: UInt8 = 0b00000100
+    static let srZMask: UInt8 = 0b00000010
+    static let srCMask: UInt8 = 0b00000001
+    
+    var srN: Bool { sr & CPU6502.srNMask != 0 }
+    var srV: Bool { sr & CPU6502.srVMask != 0 }
+    var srX: Bool { sr & CPU6502.srZMask != 0 }
+    var srB: Bool { sr & CPU6502.srBMask != 0 }
+    var srD: Bool { sr & CPU6502.srDMask != 0 }
+    var srI: Bool { sr & CPU6502.srIMask != 0 }
+    var srZ: Bool { sr & CPU6502.srZMask != 0 }
+    var srC: Bool { sr & CPU6502.srCMask != 0 }
 }
 
 // MARK: Memory Subsystem
@@ -59,13 +68,14 @@ extension CPU6502 {
     nonisolated(unsafe) static var load: (UInt16) -> UInt8 = { address in
         return 0xEA
     }
-}
 
-extension CPU6502 {
     // TODO: Lock
     nonisolated(unsafe) static var store: (UInt16, UInt8) -> () = { address, value in
         return
     }
+    
+    static let zeropage: UInt8 = 0x00
+    static let stackpage: UInt8 = 0x01
 }
 
 // MARK: Conveniences
