@@ -54,91 +54,138 @@ extension CPU6502 {
 
 // MARK: Transfer Instructions
 
+// Load Accumulator with Memory
+//
+// M -> A
+// N    Z    C    I    D    V
+// +    +    -    -    -    -
+// addressing    assembler    opc    bytes    cycles
+// immediate     LDA #oper    A9     2        2
+// zeropage      LDA oper     A5     2        3
+// zeropage,X    LDA oper,X   B5     2        4
+// absolute      LDA oper     AD     3        4
+// absolute,X    LDA oper,X   BD     3        4*
+// absolute,Y    LDA oper,Y   B9     3        4*
+// (indirect,X)  LDA (oper,X) A1     2        6
+// (indirect),Y  LDA (oper),Y B1     2        5*
 extension CPU6502 {
-    // Load Accumulator with Memory
-    //
-    // M -> A
-    // N    Z    C    I    D    V
-    // +    +    -    -    -    -
-    // addressing   assembler    opc    bytes    cycles
-    // immediate    LDA #oper    A9     2        2
-    // zeropage     LDA oper     A5     2        3
-    // zeropage,X   LDA oper,X   B5     2        4
-    // absolute     LDA oper     AD     3        4
-    // absolute,X   LDA oper,X   BD     3        4*
-    // absolute,Y   LDA oper,Y   B9     3        4*
-    // (indirect,X) LDA (oper,X) A1     2        6
-    // (indirect),Y LDA (oper),Y B1     2        5*
     mutating func executeLDA(immediate oper: UInt8) {
         ac = oper
     }
     
     mutating func executeLDA(zeropage oper: UInt8) {
-        ac = loadZeroPage(oper)
+        let address = UInt16(high: 0x00, low: oper)
+        ac = CPU6502.load(address)
     }
     
     mutating func executeLDA(zeropageX oper: UInt8) {
-        ac = loadZeroPage(oper &+ xr)
+        let address = UInt16(high: 0x00, low: oper &+ xr)
+        ac = CPU6502.load(address)
     }
     
     mutating func executeLDA(absolute oper: UInt16) {
         let address = oper
-        ac = load(address)
+        ac = CPU6502.load(address)
     }
     
     mutating func executeLDA(absoluteX oper: UInt16) {
         let address = oper &+ UInt16(xr)
-        ac = load(address)
+        ac = CPU6502.load(address)
     }
     
     mutating func executeLDA(absoluteY oper: UInt16) {
         let address = oper &+ UInt16(yr)
-        ac = load(address)
+        ac = CPU6502.load(address)
     }
     
     mutating func executeLDA(indirectX oper: UInt16) {
-        let ptr = oper &+ UInt16(xr)
-        let low = load(ptr)
-        let high = loadNext(ptr)
-        ac = load(high, low)
+        let pointer = oper &+ UInt16(xr)
+        let low = CPU6502.load(pointer)
+        let high = CPU6502.load(pointer.next)
+        let address = UInt16(high: high, low: low)
+        ac = CPU6502.load(address)
     }
     
     mutating func executeLDA(indirectY oper: UInt16) {
-        let ptr = oper
-        let low = load(ptr)
-        let high = loadNext(ptr)
+        let pointer = oper
+        let low = CPU6502.load(pointer)
+        let high = CPU6502.load(pointer.next)
         let address = UInt16(high: high, low: low) &+ UInt16(yr)
-        ac = load(address)
+        ac = CPU6502.load(address)
+    }
+}
+
+// Store Accumulator in Memory
+//
+// A -> M
+// N    Z    C    I    D    V
+// -    -    -    -    -    -
+// addressing    assembler    opc    bytes    cycles
+// zeropage      STA oper     85     2        3
+// zeropage,X    STA oper,X   95     2        4
+// absolute      STA oper     8D     3        4
+// absolute,X    STA oper,X   9D     3        5
+// absolute,Y    STA oper,Y   99     3        5
+// (indirect,X)  STA (oper,X) 81     2        6
+// (indirect),Y  STA (oper),Y 91     2        6
+extension CPU6502 {
+    mutating func executeSTA(zeropage oper: UInt8) {
+        let address = UInt16(high: 0x00, low: oper)
+        CPU6502.store(address, ac)
+    }
+    
+    mutating func executeSTA(zeropageX oper: UInt8) {
+        let address = UInt16(high: 0x00, low: oper &+ xr)
+        CPU6502.store(address, ac)
+    }
+    
+    mutating func executeSTA(absolute oper: UInt16) {
+        let address = oper
+        CPU6502.store(address, ac)
+    }
+    
+    mutating func executeSTA(absoluteX oper: UInt16) {
+        let address = oper &+ UInt16(xr)
+        CPU6502.store(address, ac)
+    }
+    
+    mutating func executeSTA(absoluteY oper: UInt16) {
+        let address = oper &+ UInt16(yr)
+        CPU6502.store(address, ac)
+    }
+    
+    mutating func executeSTA(indirectX oper: UInt16) {
+        let pointer = oper &+ UInt16(xr)
+        let low = CPU6502.load(pointer)
+        let high = CPU6502.load(pointer.next)
+        let address = UInt16(high: high, low: low)
+        CPU6502.store(address, ac)
+    }
+    
+    mutating func executeSTA(indirectY oper: UInt16) {
+        let pointer = oper
+        let low = CPU6502.load(pointer)
+        let high = CPU6502.load(pointer.next)
+        let address = UInt16(high: high, low: low) &+ UInt16(yr)
+        CPU6502.store(address, ac)
+    }
+}
+
+// MARK: Memory Subsystem
+
+extension CPU6502 {
+    nonisolated(unsafe) static var load: (UInt16) -> UInt8 = { address in
+        return 0xEA
     }
 }
 
 extension CPU6502 {
-    nonisolated(unsafe) static var load: (UInt8, UInt8) -> UInt8 = { addressHigh, addressLow in
-        return (addressHigh & 0xF0) | (addressLow & 0x0F)
-    }
-    
-    func loadNext(_ address: UInt16) -> UInt8 {
-        return load(address &+ 1)
-    }
-    
-    func loadNext(_ addressHigh: UInt8, _ addressLow: UInt8) -> UInt8 {
-        return loadNext((UInt16(addressHigh) << 8) &+ UInt16(addressLow))
-    }
-    
-    func loadZeroPage(_ address: UInt8) -> UInt8 {
-        return load(0x00, address)
-    }
-    
-    func load(_ address: UInt16) -> UInt8 {
-        let addressLow = UInt8(address & 0x00FF)
-        let addressHigh = UInt8((address & 0xFF00) >> 8)
-        return load(addressHigh, addressLow)
-    }
-    
-    func load(_ addressHigh: UInt8, _ addressLow: UInt8) -> UInt8 {
-        return CPU6502.load(addressHigh, addressLow)
+    nonisolated(unsafe) static var store: (UInt16, UInt8) -> () = { address, value in
+        return
     }
 }
+
+// MARK: Conveniences
 
 extension UInt16 {
     init(high: UInt8, low: UInt8) {
@@ -151,5 +198,9 @@ extension UInt16 {
     
     var low: UInt8 {
         return UInt8(self & 0x00FF)
+    }
+    
+    var next: Self {
+        self &+ 1
     }
 }
