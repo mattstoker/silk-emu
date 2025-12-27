@@ -65,4 +65,40 @@ class CPU6502STTests {
         ) &+ 0x74
         #expect(memory[Int(address)] == 0x66)
     }
+    
+    @Test func executeSTXZeroPage() {
+        var cpu = CPU6502(xr: 0xAA)
+        cpu.executeSTX(zeropage: 0xAB)
+        #expect(memory[0x00AB] == 0xAA)
+    }
+    
+    @Test func executeSTXZeroPageY() {
+        var cpu = CPU6502(xr: 0xBB, yr: 0x23)
+        cpu.executeSTX(zeropageY: 0xAB)
+        #expect(memory[0x00AB &+ 0x23] == 0xBB)
+    }
+    
+    @Test func executeSTXAbsolute() {
+        var cpu = CPU6502(xr: 0xCC)
+        cpu.executeSTX(absolute: 0xABCD)
+        #expect(memory[0xABCD] == 0xCC)
+    }
+    
+    @Test func executeSTYZeroPage() {
+        var cpu = CPU6502(yr: 0xAA)
+        cpu.executeSTY(zeropage: 0xAB)
+        #expect(memory[0x00AB] == 0xAA)
+    }
+    
+    @Test func executeSTYZeroPageX() {
+        var cpu = CPU6502(xr: 0x23, yr: 0xBB)
+        cpu.executeSTY(zeropageX: 0xAB)
+        #expect(memory[0x00AB &+ 0x23] == 0xBB)
+    }
+    
+    @Test func executeSTYAbsolute() {
+        var cpu = CPU6502(yr: 0xCC)
+        cpu.executeSTY(absolute: 0xABCD)
+        #expect(memory[0xABCD] == 0xCC)
+    }
 }

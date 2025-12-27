@@ -71,4 +71,64 @@ class CPU6502LDTests {
         ) &+ 0x74
         #expect(cpu == CPU6502(ac: CPU6502.load(address), yr: 0x74))
     }
+    
+    @Test func executeLDXImmediate() {
+        var cpu = CPU6502()
+        cpu.executeLDX(immediate: 0xEA)
+        #expect(cpu == CPU6502(xr: 0xEA))
+    }
+    
+    @Test func executeLDXZeroPage() {
+        var cpu = CPU6502()
+        cpu.executeLDX(zeropage: 0xAB)
+        #expect(cpu == CPU6502(xr: CPU6502.load(UInt16(high: 0x00, low: 0xAB))))
+    }
+    
+    @Test func executeLDXZeroPageY() {
+        var cpu = CPU6502(yr: 0x23)
+        cpu.executeLDX(zeropageY: 0xAB)
+        #expect(cpu == CPU6502(xr: CPU6502.load(UInt16(high: 0x00, low: 0xAB + 0x23)), yr: 0x23))
+    }
+    
+    @Test func executeLDXAbsolute() {
+        var cpu = CPU6502()
+        cpu.executeLDX(absolute: 0xABCD)
+        #expect(cpu == CPU6502(xr: CPU6502.load(UInt16(high: 0xAB, low: 0xCD))))
+    }
+    
+    @Test func executeLDXAbsoluteY() {
+        var cpu = CPU6502(yr: 0x74)
+        cpu.executeLDX(absoluteY: 0xABCD)
+        #expect(cpu == CPU6502(xr: CPU6502.load(UInt16(high: 0xAB + 1, low: 0xCD &+ 0x74)), yr: 0x74))
+    }
+    
+    @Test func executeLDYImmediate() {
+        var cpu = CPU6502()
+        cpu.executeLDY(immediate: 0xEA)
+        #expect(cpu == CPU6502(yr: 0xEA))
+    }
+    
+    @Test func executeLDYZeroPage() {
+        var cpu = CPU6502()
+        cpu.executeLDY(zeropage: 0xAB)
+        #expect(cpu == CPU6502(yr: CPU6502.load(UInt16(high: 0x00, low: 0xAB))))
+    }
+    
+    @Test func executeLDYZeroPageX() {
+        var cpu = CPU6502(xr: 0x23)
+        cpu.executeLDY(zeropageX: 0xAB)
+        #expect(cpu == CPU6502(xr: 0x23, yr: CPU6502.load(UInt16(high: 0x00, low: 0xAB + 0x23))))
+    }
+    
+    @Test func executeLDYAbsolute() {
+        var cpu = CPU6502()
+        cpu.executeLDY(absolute: 0xABCD)
+        #expect(cpu == CPU6502(yr: CPU6502.load(UInt16(high: 0xAB, low: 0xCD))))
+    }
+    
+    @Test func executeLDYAbsoluteX() {
+        var cpu = CPU6502(xr: 0x74)
+        cpu.executeLDY(absoluteX: 0xABCD)
+        #expect(cpu == CPU6502(xr: 0x74, yr: CPU6502.load(UInt16(high: 0xAB + 1, low: 0xCD &+ 0x74))))
+    }
 }

@@ -90,7 +90,7 @@ extension CPU6502 {
     }
     
     mutating func executeLDX(zeropageY oper: UInt8) {
-        let address = UInt16(high: 0x00, low: oper &+ xr)
+        let address = UInt16(high: 0x00, low: oper &+ yr)
         xr = CPU6502.load(address)
     }
     

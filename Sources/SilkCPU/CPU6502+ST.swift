@@ -79,7 +79,7 @@ extension CPU6502 {
     }
     
     mutating func executeSTX(zeropageY oper: UInt8) {
-        let address = UInt16(high: 0x00, low: oper &+ xr)
+        let address = UInt16(high: 0x00, low: oper &+ yr)
         CPU6502.store(address, xr)
     }
     
