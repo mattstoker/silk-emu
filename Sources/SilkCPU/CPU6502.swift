@@ -68,14 +68,135 @@ extension CPU6502 {
     nonisolated(unsafe) static var load: (UInt16) -> UInt8 = { address in
         return 0xEA
     }
-
+    
     // TODO: Lock
     nonisolated(unsafe) static var store: (UInt16, UInt8) -> () = { address, value in
         return
     }
-    
+}
+
+// MARK: Addressing Modes
+
+extension CPU6502 {
     static let zeropage: UInt8 = 0x00
     static let stackpage: UInt8 = 0x01
+    
+    func load(zeropage oper: UInt8) -> UInt8 {
+        let address = UInt16(high: CPU6502.zeropage, low: oper)
+        let value = CPU6502.load(address)
+        return value
+    }
+    
+    func load(zeropageX oper: UInt8) -> UInt8 {
+        let address = UInt16(high: CPU6502.zeropage, low: oper &+ xr)
+        let value = CPU6502.load(address)
+        return value
+    }
+    
+    func load(zeropageY oper: UInt8) -> UInt8 {
+        let address = UInt16(high: CPU6502.zeropage, low: oper &+ yr)
+        let value = CPU6502.load(address)
+        return value
+    }
+    
+    func load(absolute oper: UInt16) -> UInt8 {
+        let address = oper
+        let value = CPU6502.load(address)
+        return value
+    }
+    
+    func load(absoluteX oper: UInt16) -> UInt8 {
+        let address = oper &+ UInt16(xr)
+        let value = CPU6502.load(address)
+        return value
+    }
+    
+    func load(absoluteY oper: UInt16) -> UInt8 {
+        let address = oper &+ UInt16(yr)
+        let value = CPU6502.load(address)
+        return value
+    }
+    
+    func load(indirectX oper: UInt16) -> UInt8 {
+        let pointer = oper &+ UInt16(xr)
+        let low = CPU6502.load(pointer)
+        let high = CPU6502.load(pointer.next)
+        let address = UInt16(high: high, low: low)
+        let value = CPU6502.load(address)
+        return value
+    }
+    
+    func load(indirectY oper: UInt16) -> UInt8 {
+        let pointer = oper
+        let low = CPU6502.load(pointer)
+        let high = CPU6502.load(pointer.next)
+        let address = UInt16(high: high, low: low) &+ UInt16(yr)
+        let value = CPU6502.load(address)
+        return value
+    }
+    
+    func load(zeropageIndirect oper: UInt8) -> UInt8 {
+        let pointer = UInt16(high: CPU6502.zeropage, low: oper)
+        let low = CPU6502.load(pointer)
+        let high = CPU6502.load(pointer.next)
+        let address = UInt16(high: high, low: low)
+        let value = CPU6502.load(address)
+        return value
+    }
+    
+    func store(zeropage oper: UInt8, value: UInt8) {
+        let address = UInt16(high: CPU6502.zeropage, low: oper)
+        CPU6502.store(address, value)
+    }
+    
+    func store(zeropageX oper: UInt8, value: UInt8) {
+        let address = UInt16(high: CPU6502.zeropage, low: oper &+ xr)
+        CPU6502.store(address, value)
+    }
+    
+    func store(zeropageY oper: UInt8, value: UInt8) {
+        let address = UInt16(high: CPU6502.zeropage, low: oper &+ yr)
+        CPU6502.store(address, value)
+    }
+    
+    func store(absolute oper: UInt16, value: UInt8) {
+        let address = oper
+        CPU6502.store(address, value)
+    }
+    
+    func store(absoluteX oper: UInt16, value: UInt8) {
+        let address = oper &+ UInt16(xr)
+        CPU6502.store(address, value)
+    }
+    
+    func store(absoluteY oper: UInt16, value: UInt8) {
+        let address = oper &+ UInt16(yr)
+        CPU6502.store(address, value)
+    }
+    
+    func store(indirectX oper: UInt16, value: UInt8) {
+        let pointer = oper &+ UInt16(xr)
+        let low = CPU6502.load(pointer)
+        let high = CPU6502.load(pointer.next)
+        let address = UInt16(high: high, low: low)
+        CPU6502.store(address, value)
+    }
+    
+    func store(indirectY oper: UInt16, value: UInt8) {
+        let pointer = oper
+        let low = CPU6502.load(pointer)
+        let high = CPU6502.load(pointer.next)
+        let address = UInt16(high: high, low: low) &+ UInt16(yr)
+        CPU6502.store(address, value)
+    }
+
+    func store(zeropageIndirect oper: UInt8, value: UInt8) {
+        let pointer = UInt16(high: CPU6502.zeropage, low: oper)
+        let low = CPU6502.load(pointer)
+        let high = CPU6502.load(pointer.next)
+        let address = UInt16(high: high, low: low)
+        CPU6502.store(address, value)
+    }
 }
 
 // MARK: Conveniences

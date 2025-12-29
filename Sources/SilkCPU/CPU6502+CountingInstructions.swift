@@ -20,27 +20,23 @@
 // absolute,X    DEC oper,X   DE     3        7
 extension CPU6502 {
     mutating func executeDEC(zeropage oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper)
-        let value = CPU6502.load(address)
-        CPU6502.store(address, value &- 1)
+        let value = load(zeropage: oper)
+        store(zeropage: oper, value: value &- 1)
     }
     
     mutating func executeDEC(zeropageX oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper &+ xr)
-        let value = CPU6502.load(address)
-        CPU6502.store(address, value &- 1)
+        let value = load(zeropageX: oper)
+        store(zeropageX: oper, value: value &- 1)
     }
     
     mutating func executeDEC(absolute oper: UInt16) {
-        let address = oper
-        let value = CPU6502.load(address)
-        CPU6502.store(address, value &- 1)
+        let value = load(absolute: oper)
+        store(absolute: oper, value: value &- 1)
     }
     
     mutating func executeDEC(absoluteX oper: UInt16) {
-        let address = oper &+ UInt16(xr)
-        let value = CPU6502.load(address)
-        CPU6502.store(address, value &- 1)
+        let value = load(absoluteX: oper)
+        store(absoluteX: oper, value: value &- 1)
     }
 }
 
@@ -99,27 +95,23 @@ extension CPU6502 {
 // absolute,X    INC oper,X   FE     3        7
 extension CPU6502 {
     mutating func executeINC(zeropage oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper)
-        let value = CPU6502.load(address)
-        CPU6502.store(address, value &+ 1)
+        let value = load(zeropage: oper)
+        store(zeropage: oper, value: value &+ 1)
     }
     
     mutating func executeINC(zeropageX oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper &+ xr)
-        let value = CPU6502.load(address)
-        CPU6502.store(address, value &+ 1)
+        let value = load(zeropageX: oper)
+        store(zeropageX: oper, value: value &+ 1)
     }
     
     mutating func executeINC(absolute oper: UInt16) {
-        let address = oper
-        let value = CPU6502.load(address)
-        CPU6502.store(address, value &+ 1)
+        let value = load(absolute: oper)
+        store(absolute: oper, value: value &+ 1)
     }
     
     mutating func executeINC(absoluteX oper: UInt16) {
-        let address = oper &+ UInt16(xr)
-        let value = CPU6502.load(address)
-        CPU6502.store(address, value &+ 1)
+        let value = load(absoluteX: oper)
+        store(absoluteX: oper, value: value &+ 1)
     }
 }
 

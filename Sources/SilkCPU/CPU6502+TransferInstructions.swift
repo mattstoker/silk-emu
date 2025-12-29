@@ -28,44 +28,31 @@ extension CPU6502 {
     }
     
     mutating func executeLDA(zeropage oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper)
-        ac = CPU6502.load(address)
+        ac = load(zeropage: oper)
     }
     
     mutating func executeLDA(zeropageX oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper &+ xr)
-        ac = CPU6502.load(address)
+        ac = load(zeropageX: oper)
     }
     
     mutating func executeLDA(absolute oper: UInt16) {
-        let address = oper
-        ac = CPU6502.load(address)
+        ac = load(absolute: oper)
     }
     
     mutating func executeLDA(absoluteX oper: UInt16) {
-        let address = oper &+ UInt16(xr)
-        ac = CPU6502.load(address)
+        ac = load(absoluteX: oper)
     }
     
     mutating func executeLDA(absoluteY oper: UInt16) {
-        let address = oper &+ UInt16(yr)
-        ac = CPU6502.load(address)
+        ac = load(absoluteY: oper)
     }
     
     mutating func executeLDA(indirectX oper: UInt16) {
-        let pointer = oper &+ UInt16(xr)
-        let low = CPU6502.load(pointer)
-        let high = CPU6502.load(pointer.next)
-        let address = UInt16(high: high, low: low)
-        ac = CPU6502.load(address)
+        ac = load(indirectX: oper)
     }
     
     mutating func executeLDA(indirectY oper: UInt16) {
-        let pointer = oper
-        let low = CPU6502.load(pointer)
-        let high = CPU6502.load(pointer.next)
-        let address = UInt16(high: high, low: low) &+ UInt16(yr)
-        ac = CPU6502.load(address)
+        ac = load(indirectY: oper)
     }
 }
 
@@ -79,11 +66,7 @@ extension CPU6502 {
 // (zeropage)    LDA (oper)   B2     2        5         *
 extension CPU6502 {
     mutating func executeLDA(zeropageIndirect oper: UInt8) {
-        let pointer = UInt16(high: CPU6502.zeropage, low: oper)
-        let low = CPU6502.load(pointer)
-        let high = CPU6502.load(pointer.next)
-        let address = UInt16(high: high, low: low)
-        ac = CPU6502.load(address)
+        ac = load(zeropageIndirect: oper)
     }
 }
 
@@ -105,23 +88,19 @@ extension CPU6502 {
     }
     
     mutating func executeLDX(zeropage oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper)
-        xr = CPU6502.load(address)
+        xr = load(zeropage: oper)
     }
     
     mutating func executeLDX(zeropageY oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper &+ yr)
-        xr = CPU6502.load(address)
+        xr = load(zeropageY: oper)
     }
     
     mutating func executeLDX(absolute oper: UInt16) {
-        let address = oper
-        xr = CPU6502.load(address)
+        xr = load(absolute: oper)
     }
     
     mutating func executeLDX(absoluteY oper: UInt16) {
-        let address = oper &+ UInt16(yr)
-        xr = CPU6502.load(address)
+        xr = load(absoluteY: oper)
     }
 }
 
@@ -143,23 +122,19 @@ extension CPU6502 {
     }
     
     mutating func executeLDY(zeropage oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper)
-        yr = CPU6502.load(address)
+        yr = load(zeropage: oper)
     }
     
     mutating func executeLDY(zeropageX oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper &+ xr)
-        yr = CPU6502.load(address)
+        yr = load(zeropageX: oper)
     }
     
     mutating func executeLDY(absolute oper: UInt16) {
-        let address = oper
-        yr = CPU6502.load(address)
+        yr = load(absolute: oper)
     }
     
     mutating func executeLDY(absoluteX oper: UInt16) {
-        let address = oper &+ UInt16(xr)
-        yr = CPU6502.load(address)
+        yr = load(absoluteX: oper)
     }
 }
 
@@ -181,44 +156,31 @@ extension CPU6502 {
 // (indirect),Y  STA (oper),Y 91     2        6
 extension CPU6502 {
     mutating func executeSTA(zeropage oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper)
-        CPU6502.store(address, ac)
+        store(zeropage: oper, value: ac)
     }
     
     mutating func executeSTA(zeropageX oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper &+ xr)
-        CPU6502.store(address, ac)
+        store(zeropageX: oper, value: ac)
     }
     
     mutating func executeSTA(absolute oper: UInt16) {
-        let address = oper
-        CPU6502.store(address, ac)
+        store(absolute: oper, value: ac)
     }
     
     mutating func executeSTA(absoluteX oper: UInt16) {
-        let address = oper &+ UInt16(xr)
-        CPU6502.store(address, ac)
+        store(absoluteX: oper, value: ac)
     }
     
     mutating func executeSTA(absoluteY oper: UInt16) {
-        let address = oper &+ UInt16(yr)
-        CPU6502.store(address, ac)
+        store(absoluteY: oper, value: ac)
     }
     
     mutating func executeSTA(indirectX oper: UInt16) {
-        let pointer = oper &+ UInt16(xr)
-        let low = CPU6502.load(pointer)
-        let high = CPU6502.load(pointer.next)
-        let address = UInt16(high: high, low: low)
-        CPU6502.store(address, ac)
+        store(indirectX: oper, value: ac)
     }
     
     mutating func executeSTA(indirectY oper: UInt16) {
-        let pointer = oper
-        let low = CPU6502.load(pointer)
-        let high = CPU6502.load(pointer.next)
-        let address = UInt16(high: high, low: low) &+ UInt16(yr)
-        CPU6502.store(address, ac)
+        store(indirectY: oper, value: ac)
     }
 }
 
@@ -232,11 +194,7 @@ extension CPU6502 {
 // (zeropage)    SBC (oper)   92     2        5         *
 extension CPU6502 {
     mutating func executeSTA(zeropageIndirect oper: UInt8) {
-        let pointer = UInt16(high: CPU6502.zeropage, low: oper)
-        let low = CPU6502.load(pointer)
-        let high = CPU6502.load(pointer.next)
-        let address = UInt16(high: high, low: low)
-        CPU6502.store(address, ac)
+        store(zeropageIndirect: oper, value: ac)
     }
 }
 
@@ -252,18 +210,15 @@ extension CPU6502 {
 // absolute      STX oper     8E    3    4
 extension CPU6502 {
     mutating func executeSTX(zeropage oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper)
-        CPU6502.store(address, xr)
+        store(zeropage: oper, value: xr)
     }
     
     mutating func executeSTX(zeropageY oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper &+ yr)
-        CPU6502.store(address, xr)
+        store(zeropageY: oper, value: xr)
     }
     
     mutating func executeSTX(absolute oper: UInt16) {
-        let address = oper
-        CPU6502.store(address, xr)
+        store(absolute: oper, value: xr)
     }
 }
 
@@ -279,18 +234,15 @@ extension CPU6502 {
 // absolute      STY oper     8C    3    4
 extension CPU6502 {
     mutating func executeSTY(zeropage oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper)
-        CPU6502.store(address, yr)
+        store(zeropage: oper, value: yr)
     }
     
     mutating func executeSTY(zeropageX oper: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper &+ xr)
-        CPU6502.store(address, yr)
+        store(zeropageX: oper, value: yr)
     }
     
     mutating func executeSTY(absolute oper: UInt16) {
-        let address = oper
-        CPU6502.store(address, yr)
+        store(absolute: oper, value: yr)
     }
 }
 

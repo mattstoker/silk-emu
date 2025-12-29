@@ -16,7 +16,7 @@
 extension CPU6502 {
     mutating func executePHA() {
         let address = UInt16(high: CPU6502.stackpage, low: sp)
-        CPU6502.store(address, ac)
+        store(absolute: address, value: ac)
         sp = sp &- 1
     }
 }
@@ -35,7 +35,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePHP() {
         let address = UInt16(high: CPU6502.stackpage, low: sp)
-        CPU6502.store(address, sr | CPU6502.srBMask | CPU6502.srXMask)
+        store(absolute: address, value: sr | CPU6502.srBMask | CPU6502.srXMask)
         sp = sp &- 1
     }
 }
@@ -51,7 +51,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePHX() {
         let address = UInt16(high: CPU6502.stackpage, low: sp)
-        CPU6502.store(address, xr)
+        store(absolute: address, value: xr)
         sp = sp &- 1
     }
 }
@@ -67,7 +67,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePHY() {
         let address = UInt16(high: CPU6502.stackpage, low: sp)
-        CPU6502.store(address, yr)
+        store(absolute: address, value: yr)
         sp = sp &- 1
     }
 }
@@ -83,7 +83,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePLA() {
         let address = UInt16(high: CPU6502.stackpage, low: sp)
-        ac = CPU6502.load(address)
+        ac = load(absolute: address)
         sp = sp &+ 1
     }
 }
@@ -102,7 +102,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePLP() {
         let address = UInt16(high: CPU6502.stackpage, low: sp)
-        sr = CPU6502.load(address)
+        sr = load(absolute: address)
         sp = sp &+ 1
     }
 }
@@ -118,7 +118,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePLX() {
         let address = UInt16(high: CPU6502.stackpage, low: sp)
-        xr = CPU6502.load(address)
+        xr = load(absolute: address)
         sp = sp &+ 1
     }
 }
@@ -134,7 +134,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePLY() {
         let address = UInt16(high: CPU6502.stackpage, low: sp)
-        yr = CPU6502.load(address)
+        yr = load(absolute: address)
         sp = sp &+ 1
     }
 }
