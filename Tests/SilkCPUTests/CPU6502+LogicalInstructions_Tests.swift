@@ -2,7 +2,7 @@
 //  CPU6502+LogicalInstructions_Tests.swift
 //  SilkEmu
 //
-//  Created by Matt Stoker on 12/27/25.
+//  Created by Matt Stoker on 12/29/25.
 //
 
 import Testing
