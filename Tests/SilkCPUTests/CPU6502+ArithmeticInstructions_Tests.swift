@@ -8,7 +8,7 @@
 import Testing
 @testable import SilkCPU
 
-// MARK: - Load Instruction Tests
+// MARK: - Arithmetic Instruction Tests
 
 @Suite("6502 CPU Arithmetic Instruction Tests")
 class CPU6502ArithmeticInstructionTests {

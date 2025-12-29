@@ -254,6 +254,30 @@ class CPU6502STTests {
         cpu.executeSTY(absolute: 0xABCD)
         #expect(memory(0xABCD) == 0xCC)
     }
+    
+    @Test func executeSTZZeroPage() {
+        var cpu = CPU6502()
+        cpu.executeSTZ(zeropage: 0xAB)
+        #expect(memory(CPU6502.zeropage, 0xAB) == 0x00)
+    }
+    
+    @Test func executeSTZZeroPageX() {
+        var cpu = CPU6502(xr: 0x23)
+        cpu.executeSTZ(zeropageX: 0xAB)
+        #expect(memory(CPU6502.zeropage, 0xAB &+ 0x23) == 0x00)
+    }
+    
+    @Test func executeSTZAbsolute() {
+        var cpu = CPU6502()
+        cpu.executeSTZ(absolute: 0xABCD)
+        #expect(memory(0xABCD) == 0x00)
+    }
+    
+    @Test func executeSTZAbsoluteX() {
+        var cpu = CPU6502(xr: 0xCC)
+        cpu.executeSTZ(absoluteX: 0xABCD)
+        #expect(memory(0xABCD &+ 0xCC) == 0x00)
+    }
 }
 
 // MARK: - Register Transfer Instruction Tests

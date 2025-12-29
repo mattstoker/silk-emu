@@ -246,6 +246,35 @@ extension CPU6502 {
     }
 }
 
+// STZ
+// Store Zero in Memory
+//
+// 0 -> M
+// N    Z    C    I    D    V
+// -    -    -    -    -    -
+// addressing    assembler    opc    bytes    cycles    W65C02-only
+// zeropage      STZ oper     64     2        3         *
+// zeropage,X    STZ oper,X   74     2        4         *
+// absolute      STZ oper     9C     3        4         *
+// absolute,X    STZ oper,X   9E     3        4*        *
+extension CPU6502 {
+    mutating func executeSTZ(zeropage oper: UInt8) {
+        store(zeropage: oper, value: 0x00)
+    }
+    
+    mutating func executeSTZ(zeropageX oper: UInt8) {
+        store(zeropageX: oper, value: 0x00)
+    }
+    
+    mutating func executeSTZ(absolute oper: UInt16) {
+        store(absolute: oper, value: 0x00)
+    }
+    
+    mutating func executeSTZ(absoluteX oper: UInt16) {
+        store(absoluteX: oper, value: 0x00)
+    }
+}
+
 // MARK: - Register Transfer Instructions
 
 // TAX

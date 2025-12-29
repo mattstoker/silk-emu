@@ -5,6 +5,8 @@
 //  Created by Matt Stoker on 12/28/25.
 //
 
+// MARK: - Arithmetic Instructions
+
 // ADC
 // Add Memory to Accumulator with Carry
 //
