@@ -1,11 +1,17 @@
+//
+//  CPU6502+LogicalInstructions_Tests.swift
+//  SilkEmu
+//
+//  Created by Matt Stoker on 12/27/25.
+//
 
 import Testing
 @testable import SilkCPU
 
-// MARK: - Shift Instruction Tests
+// MARK: - Logical Instruction Tests
 
-@Suite("6502 CPU Shift Instruction Tests")
-class CPU6502ShiftInstructionTests {
+@Suite("6502 CPU Logical Instruction Tests")
+class CPU6502LogicalInstructionTests {
     @Test func executeANDImmediate() {
         let registerOperand = UInt8.random(in: 0x00...0xFF)
         let immediateOperand = UInt8.random(in: 0x00...0xFF)

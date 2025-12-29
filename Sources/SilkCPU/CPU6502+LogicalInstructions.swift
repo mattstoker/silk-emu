@@ -1,11 +1,11 @@
 //
-//  CPU6502+StackInstructions.swift
+//  CPU6502+LogicalInstructions.swift
 //  SilkEmu
 //
 //  Created by Matt Stoker on 12/29/25.
 //
 
-// MARK: - Shift Instructions
+// MARK: - Logical Instructions
 
 // AND
 // AND Memory with Accumulator
