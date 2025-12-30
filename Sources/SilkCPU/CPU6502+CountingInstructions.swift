@@ -7,7 +7,7 @@
 
 // MARK: - Counting Instructions
 
-let srDEC = CPU6502.srNMask | CPU6502.srZMask
+fileprivate let srDEC = CPU6502.srNMask | CPU6502.srZMask
 
 // INC
 // Increment Memory by One

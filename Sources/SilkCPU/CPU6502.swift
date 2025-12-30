@@ -5,6 +5,8 @@
 //  Created by Matt Stoker on 12/24/25.
 //
 
+// MARK: CPU State & Equality
+
 struct CPU6502 {
     var pc: UInt16
     var ac: UInt8
@@ -83,15 +85,6 @@ extension CPU6502 {
     static let srIMask: UInt8 = 0b00000100
     static let srZMask: UInt8 = 0b00000010
     static let srCMask: UInt8 = 0b00000001
-    
-    var srN: Bool { sr & CPU6502.srNMask != 0 }
-    var srV: Bool { sr & CPU6502.srVMask != 0 }
-    var srX: Bool { sr & CPU6502.srZMask != 0 }
-    var srB: Bool { sr & CPU6502.srBMask != 0 }
-    var srD: Bool { sr & CPU6502.srDMask != 0 }
-    var srI: Bool { sr & CPU6502.srIMask != 0 }
-    var srZ: Bool { sr & CPU6502.srZMask != 0 }
-    var srC: Bool { sr & CPU6502.srCMask != 0 }
 }
 
 // MARK: Arithmetic Logic
@@ -226,7 +219,7 @@ extension CPU6502 {
     func load(indirectX oper: UInt16) -> UInt8 {
         let pointer = oper &+ UInt16(xr)
         let low = load(pointer)
-        let high = load(pointer.next)
+        let high = load(pointer &+ 1)
         let address = UInt16(high: high, low: low)
         let value = load(address)
         return value
@@ -235,7 +228,7 @@ extension CPU6502 {
     func load(indirectY oper: UInt16) -> UInt8 {
         let pointer = oper
         let low = load(pointer)
-        let high = load(pointer.next)
+        let high = load(pointer &+ 1)
         let address = UInt16(high: high, low: low) &+ UInt16(yr)
         let value = load(address)
         return value
@@ -244,7 +237,7 @@ extension CPU6502 {
     func load(zeropageIndirect oper: UInt8) -> UInt8 {
         let pointer = UInt16(high: CPU6502.zeropage, low: oper)
         let low = load(pointer)
-        let high = load(pointer.next)
+        let high = load(pointer &+ 1)
         let address = UInt16(high: high, low: low)
         let value = load(address)
         return value
@@ -289,7 +282,7 @@ extension CPU6502 {
     func store(indirectX oper: UInt16, _ value: UInt8) {
         let pointer = oper &+ UInt16(xr)
         let low = load(pointer)
-        let high = load(pointer.next)
+        let high = load(pointer &+ 1)
         let address = UInt16(high: high, low: low)
         store(address, value)
     }
@@ -297,7 +290,7 @@ extension CPU6502 {
     func store(indirectY oper: UInt16, _ value: UInt8) {
         let pointer = oper
         let low = load(pointer)
-        let high = load(pointer.next)
+        let high = load(pointer &+ 1)
         let address = UInt16(high: high, low: low) &+ UInt16(yr)
         store(address, value)
     }
@@ -305,14 +298,13 @@ extension CPU6502 {
     func store(zeropageIndirect oper: UInt8, _ value: UInt8) {
         let pointer = UInt16(high: CPU6502.zeropage, low: oper)
         let low = load(pointer)
-        let high = load(pointer.next)
+        let high = load(pointer &+ 1)
         let address = UInt16(high: high, low: low)
         store(address, value)
     }
     
     func store(stackpage oper: UInt8, _ value: UInt8) {
         let address = UInt16(high: CPU6502.stackpage, low: oper)
-        let value = load(address)
         store(address, value)
     }
 }
@@ -320,19 +312,7 @@ extension CPU6502 {
 // MARK: Conveniences
 
 extension UInt16 {
-    init(high: UInt8, low: UInt8) {
+    fileprivate init(high: UInt8, low: UInt8) {
         self = (UInt16(high) << 8) &+ UInt16(low)
-    }
-    
-    var high: UInt8 {
-        return UInt8((self & 0xFF00) >> 8)
-    }
-    
-    var low: UInt8 {
-        return UInt8(self & 0x00FF)
-    }
-    
-    var next: Self {
-        self &+ 1
     }
 }

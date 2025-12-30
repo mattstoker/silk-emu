@@ -17,8 +17,7 @@
 // implied       PHA          48     1        3
 extension CPU6502 {
     mutating func executePHA() {
-        let address = UInt16(high: CPU6502.stackpage, low: sp)
-        store(absolute: address, ac)
+        store(stackpage: sp, ac)
         sp = sp &- 1
     }
 }
@@ -36,8 +35,7 @@ extension CPU6502 {
 // implied       PHP          08     1        3
 extension CPU6502 {
     mutating func executePHP() {
-        let address = UInt16(high: CPU6502.stackpage, low: sp)
-        store(absolute: address, sr | CPU6502.srBMask | CPU6502.srXMask)
+        store(stackpage: sp, sr | CPU6502.srBMask | CPU6502.srXMask)
         sp = sp &- 1
     }
 }
@@ -52,8 +50,7 @@ extension CPU6502 {
 // stack/implied PHX          DA     1        3         *
 extension CPU6502 {
     mutating func executePHX() {
-        let address = UInt16(high: CPU6502.stackpage, low: sp)
-        store(absolute: address, xr)
+        store(stackpage: sp, xr)
         sp = sp &- 1
     }
 }
@@ -68,8 +65,7 @@ extension CPU6502 {
 // stack/implied PHY          5A     1        3         *
 extension CPU6502 {
     mutating func executePHY() {
-        let address = UInt16(high: CPU6502.stackpage, low: sp)
-        store(absolute: address, yr)
+        store(stackpage: sp, yr)
         sp = sp &- 1
     }
 }
@@ -84,8 +80,7 @@ extension CPU6502 {
 // implied       PLA          68     1        4
 extension CPU6502 {
     mutating func executePLA() {
-        let address = UInt16(high: CPU6502.stackpage, low: sp)
-        ac = load(absolute: address)
+        ac = load(stackpage: sp)
         sp = sp &+ 1
     }
 }
@@ -103,8 +98,7 @@ extension CPU6502 {
 // implied       PLP          28     1        4
 extension CPU6502 {
     mutating func executePLP() {
-        let address = UInt16(high: CPU6502.stackpage, low: sp)
-        sr = load(absolute: address)
+        sr = load(stackpage: sp)
         sp = sp &+ 1
     }
 }
@@ -119,8 +113,7 @@ extension CPU6502 {
 // implied       PLA          FA     1        4         *
 extension CPU6502 {
     mutating func executePLX() {
-        let address = UInt16(high: CPU6502.stackpage, low: sp)
-        xr = load(absolute: address)
+        xr = load(stackpage: sp)
         sp = sp &+ 1
     }
 }
@@ -135,8 +128,7 @@ extension CPU6502 {
 // implied       PLA          7A     1        4         *
 extension CPU6502 {
     mutating func executePLY() {
-        let address = UInt16(high: CPU6502.stackpage, low: sp)
-        yr = load(absolute: address)
+        yr = load(stackpage: sp)
         sp = sp &+ 1
     }
 }
