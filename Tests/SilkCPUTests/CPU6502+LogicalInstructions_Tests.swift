@@ -11,247 +11,388 @@ import Testing
 // MARK: - Logical Instruction Tests
 
 @Suite("6502 CPU Logical Instruction Tests")
-class CPU6502LogicalInstructionTests {
+struct CPU6502LogicalInstructionTests {
+    func expectedStatus(_ result: UInt8) -> UInt8 {
+        let negative = result & 0x80 != 0
+        let zero = result == 0
+        var status = UInt8.min
+        status = negative ? (status | CPU6502.srNMask) : (status & ~CPU6502.srNMask)
+        status = zero ? (status | CPU6502.srZMask) : (status & ~CPU6502.srZMask)
+        return status
+    }
+    
     @Test func executeANDImmediate() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        let immediateOperand = UInt8.random(in: 0x00...0xFF)
-        let expectedResult = registerOperand & immediateOperand
-        var cpu = CPU6502(ac: registerOperand)
-        cpu.executeAND(immediate: immediateOperand)
-        #expect(cpu == CPU6502(ac: expectedResult))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for immediateOperand in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(ac: registerOperand)
+                let expectedResult = registerOperand & immediateOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeAND(immediate: immediateOperand)
+                #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeANDZeropage() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand)
-        let memoryOperand = cpu.load(zeropage: 0x3D)
-        let expectedResult = registerOperand & memoryOperand
-        cpu.executeAND(zeropage: 0x3D)
-        #expect(cpu == CPU6502(ac: expectedResult))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(ac: registerOperand)
+                let memoryOperand = s.cpu.load(zeropage: address)
+                let expectedResult = registerOperand & memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeAND(zeropage: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeANDZeropageX() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, xr: 0x8E)
-        let memoryOperand = cpu.load(zeropageX: 0x3D)
-        let expectedResult = registerOperand & memoryOperand
-        cpu.executeAND(zeropageX: 0x3D)
-        #expect(cpu == CPU6502(ac: expectedResult, xr: 0x8E))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(ac: registerOperand, xr: 0x8E)
+                let memoryOperand = s.cpu.load(zeropageX: address)
+                let expectedResult = registerOperand & memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeAND(zeropageX: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, xr: 0x8E, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeANDAbsolute() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand)
-        let memoryOperand = cpu.load(absolute: 0x3D47)
-        let expectedResult = registerOperand & memoryOperand
-        cpu.executeAND(absolute: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand)
+                let memoryOperand = s.cpu.load(absolute: address)
+                let expectedResult = registerOperand & memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeAND(absolute: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeANDAbsoluteX() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, xr: 0x2A)
-        let memoryOperand = cpu.load(absoluteX: 0x3D47)
-        let expectedResult = registerOperand & memoryOperand
-        cpu.executeAND(absoluteX: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult, xr: 0x2A))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
+                let memoryOperand = s.cpu.load(absoluteX: address)
+                let expectedResult = registerOperand & memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeAND(absoluteX: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, xr: 0x2A, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeANDAbsoluteY() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, yr: 0x2A)
-        let memoryOperand = cpu.load(absoluteY: 0x3D47)
-        let expectedResult = registerOperand & memoryOperand
-        cpu.executeAND(absoluteY: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult, yr: 0x2A))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
+                let memoryOperand = s.cpu.load(absoluteY: address)
+                let expectedResult = registerOperand & memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeAND(absoluteY: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, yr: 0x2A, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeANDIndirectX() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, xr: 0x2A)
-        let memoryOperand = cpu.load(indirectX: 0x3D47)
-        let expectedResult = registerOperand & memoryOperand
-        cpu.executeAND(indirectX: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult, xr: 0x2A))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
+                let memoryOperand = s.cpu.load(indirectX: address)
+                let expectedResult = registerOperand & memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeAND(indirectX: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, xr: 0x2A, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeANDIndirectY() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, yr: 0x2A)
-        let memoryOperand = cpu.load(indirectY: 0x3D47)
-        let expectedResult = registerOperand & memoryOperand
-        cpu.executeAND(indirectY: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult, yr: 0x2A))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
+                let memoryOperand = s.cpu.load(indirectY: address)
+                let expectedResult = registerOperand & memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeAND(indirectY: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, yr: 0x2A, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeANDZeropageIndirect() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand)
-        let memoryOperand = cpu.load(zeropageIndirect: 0x47)
-        let expectedResult = registerOperand & memoryOperand
-        cpu.executeAND(zeropageIndirect: 0x47)
-        #expect(cpu == CPU6502(ac: expectedResult))
-    }
-
-    @Test func executeEORImmediate() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        let immediateOperand = UInt8.random(in: 0x00...0xFF)
-        let expectedResult = registerOperand ^ immediateOperand
-        var cpu = CPU6502(ac: registerOperand)
-        cpu.executeEOR(immediate: immediateOperand)
-        #expect(cpu == CPU6502(ac: expectedResult))
-    }
-    
-    @Test func executeEORZeropage() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand)
-        let memoryOperand = cpu.load(zeropage: 0x3D)
-        let expectedResult = registerOperand ^ memoryOperand
-        cpu.executeEOR(zeropage: 0x3D)
-        #expect(cpu == CPU6502(ac: expectedResult))
-    }
-    
-    @Test func executeEORZeropageX() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, xr: 0x8E)
-        let memoryOperand = cpu.load(zeropageX: 0x3D)
-        let expectedResult = registerOperand ^ memoryOperand
-        cpu.executeEOR(zeropageX: 0x3D)
-        #expect(cpu == CPU6502(ac: expectedResult, xr: 0x8E))
-    }
-    
-    @Test func executeEORAbsolute() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand)
-        let memoryOperand = cpu.load(absolute: 0x3D47)
-        let expectedResult = registerOperand ^ memoryOperand
-        cpu.executeEOR(absolute: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult))
-    }
-    
-    @Test func executeEORAbsoluteX() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, xr: 0x2A)
-        let memoryOperand = cpu.load(absoluteX: 0x3D47)
-        let expectedResult = registerOperand ^ memoryOperand
-        cpu.executeEOR(absoluteX: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult, xr: 0x2A))
-    }
-    
-    @Test func executeEORAbsoluteY() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, yr: 0x2A)
-        let memoryOperand = cpu.load(absoluteY: 0x3D47)
-        let expectedResult = registerOperand ^ memoryOperand
-        cpu.executeEOR(absoluteY: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult, yr: 0x2A))
-    }
-    
-    @Test func executeEORIndirectX() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, xr: 0x2A)
-        let memoryOperand = cpu.load(indirectX: 0x3D47)
-        let expectedResult = registerOperand ^ memoryOperand
-        cpu.executeEOR(indirectX: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult, xr: 0x2A))
-    }
-    
-    @Test func executeEORIndirectY() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, yr: 0x2A)
-        let memoryOperand = cpu.load(indirectY: 0x3D47)
-        let expectedResult = registerOperand ^ memoryOperand
-        cpu.executeEOR(indirectY: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult, yr: 0x2A))
-    }
-    
-    @Test func executeEORZeropageIndirect() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand)
-        let memoryOperand = cpu.load(zeropageIndirect: 0x47)
-        let expectedResult = registerOperand ^ memoryOperand
-        cpu.executeEOR(zeropageIndirect: 0x47)
-        #expect(cpu == CPU6502(ac: expectedResult))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(ac: registerOperand)
+                let memoryOperand = s.cpu.load(zeropageIndirect: address)
+                let expectedResult = registerOperand & memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeAND(zeropageIndirect: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+            }
+        }
     }
 
     @Test func executeORAImmediate() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        let immediateOperand = UInt8.random(in: 0x00...0xFF)
-        let expectedResult = registerOperand | immediateOperand
-        var cpu = CPU6502(ac: registerOperand)
-        cpu.executeORA(immediate: immediateOperand)
-        #expect(cpu == CPU6502(ac: expectedResult))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for immediateOperand in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(ac: registerOperand)
+                let expectedResult = registerOperand | immediateOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeORA(immediate: immediateOperand)
+                #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeORAZeropage() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand)
-        let memoryOperand = cpu.load(zeropage: 0x3D)
-        let expectedResult = registerOperand | memoryOperand
-        cpu.executeORA(zeropage: 0x3D)
-        #expect(cpu == CPU6502(ac: expectedResult))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(ac: registerOperand)
+                let memoryOperand = s.cpu.load(zeropage: address)
+                let expectedResult = registerOperand | memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeORA(zeropage: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeORAZeropageX() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, xr: 0x8E)
-        let memoryOperand = cpu.load(zeropageX: 0x3D)
-        let expectedResult = registerOperand | memoryOperand
-        cpu.executeORA(zeropageX: 0x3D)
-        #expect(cpu == CPU6502(ac: expectedResult, xr: 0x8E))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(ac: registerOperand, xr: 0x8E)
+                let memoryOperand = s.cpu.load(zeropageX: address)
+                let expectedResult = registerOperand | memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeORA(zeropageX: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, xr: 0x8E, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeORAAbsolute() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand)
-        let memoryOperand = cpu.load(absolute: 0x3D47)
-        let expectedResult = registerOperand | memoryOperand
-        cpu.executeORA(absolute: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand)
+                let memoryOperand = s.cpu.load(absolute: address)
+                let expectedResult = registerOperand | memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeORA(absolute: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeORAAbsoluteX() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, xr: 0x2A)
-        let memoryOperand = cpu.load(absoluteX: 0x3D47)
-        let expectedResult = registerOperand | memoryOperand
-        cpu.executeORA(absoluteX: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult, xr: 0x2A))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
+                let memoryOperand = s.cpu.load(absoluteX: address)
+                let expectedResult = registerOperand | memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeORA(absoluteX: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, xr: 0x2A, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeORAAbsoluteY() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, yr: 0x2A)
-        let memoryOperand = cpu.load(absoluteY: 0x3D47)
-        let expectedResult = registerOperand | memoryOperand
-        cpu.executeORA(absoluteY: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult, yr: 0x2A))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
+                let memoryOperand = s.cpu.load(absoluteY: address)
+                let expectedResult = registerOperand | memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeORA(absoluteY: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, yr: 0x2A, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeORAIndirectX() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, xr: 0x2A)
-        let memoryOperand = cpu.load(indirectX: 0x3D47)
-        let expectedResult = registerOperand | memoryOperand
-        cpu.executeORA(indirectX: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult, xr: 0x2A))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
+                let memoryOperand = s.cpu.load(indirectX: address)
+                let expectedResult = registerOperand | memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeORA(indirectX: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, xr: 0x2A, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeORAIndirectY() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand, yr: 0x2A)
-        let memoryOperand = cpu.load(indirectY: 0x3D47)
-        let expectedResult = registerOperand | memoryOperand
-        cpu.executeORA(indirectY: 0x3D47)
-        #expect(cpu == CPU6502(ac: expectedResult, yr: 0x2A))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
+                let memoryOperand = s.cpu.load(indirectY: address)
+                let expectedResult = registerOperand | memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeORA(indirectY: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, yr: 0x2A, sr: expectedStatus))
+            }
+        }
     }
     
     @Test func executeORAZeropageIndirect() {
-        let registerOperand = UInt8.random(in: 0x00...0xFF)
-        var cpu = CPU6502(ac: registerOperand)
-        let memoryOperand = cpu.load(zeropageIndirect: 0x47)
-        let expectedResult = registerOperand | memoryOperand
-        cpu.executeORA(zeropageIndirect: 0x47)
-        #expect(cpu == CPU6502(ac: expectedResult))
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(ac: registerOperand)
+                let memoryOperand = s.cpu.load(zeropageIndirect: address)
+                let expectedResult = registerOperand | memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeORA(zeropageIndirect: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+            }
+        }
+    }
+    
+    @Test func executeEORImmediate() {
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for immediateOperand in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(ac: registerOperand)
+                let expectedResult = registerOperand ^ immediateOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeEOR(immediate: immediateOperand)
+                #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+            }
+        }
+    }
+    
+    @Test func executeEORZeropage() {
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(ac: registerOperand)
+                let memoryOperand = s.cpu.load(zeropage: address)
+                let expectedResult = registerOperand ^ memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeEOR(zeropage: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+            }
+        }
+    }
+    
+    @Test func executeEORZeropageX() {
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(ac: registerOperand, xr: 0x8E)
+                let memoryOperand = s.cpu.load(zeropageX: address)
+                let expectedResult = registerOperand ^ memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeEOR(zeropageX: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, xr: 0x8E, sr: expectedStatus))
+            }
+        }
+    }
+    
+    @Test func executeEORAbsolute() {
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand)
+                let memoryOperand = s.cpu.load(absolute: address)
+                let expectedResult = registerOperand ^ memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeEOR(absolute: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+            }
+        }
+    }
+    
+    @Test func executeEORAbsoluteX() {
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
+                let memoryOperand = s.cpu.load(absoluteX: address)
+                let expectedResult = registerOperand ^ memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeEOR(absoluteX: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, xr: 0x2A, sr: expectedStatus))
+            }
+        }
+    }
+    
+    @Test func executeEORAbsoluteY() {
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
+                let memoryOperand = s.cpu.load(absoluteY: address)
+                let expectedResult = registerOperand ^ memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeEOR(absoluteY: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, yr: 0x2A, sr: expectedStatus))
+            }
+        }
+    }
+    
+    @Test func executeEORIndirectX() {
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
+                let memoryOperand = s.cpu.load(indirectX: address)
+                let expectedResult = registerOperand ^ memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeEOR(indirectX: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, xr: 0x2A, sr: expectedStatus))
+            }
+        }
+    }
+    
+    @Test func executeEORIndirectY() {
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt16.min...UInt16(0x0123) {
+                s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
+                let memoryOperand = s.cpu.load(indirectY: address)
+                let expectedResult = registerOperand ^ memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeEOR(indirectY: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, yr: 0x2A, sr: expectedStatus))
+            }
+        }
+    }
+    
+    @Test func executeEORZeropageIndirect() {
+        let s = System(cpu: CPU6502())
+        for registerOperand in UInt8.min...UInt8.max {
+            for address in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(ac: registerOperand)
+                let memoryOperand = s.cpu.load(zeropageIndirect: address)
+                let expectedResult = registerOperand ^ memoryOperand
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeEOR(zeropageIndirect: address)
+                #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+            }
+        }
     }
 }

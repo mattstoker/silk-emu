@@ -23,41 +23,36 @@
 // (indirect,X)  AND (oper,X) 21     2        6
 // (indirect),Y  AND (oper),Y 31     2        5*
 extension CPU6502 {
-    mutating func accumulate(anding value: UInt8) {
-        let result = ac & value
-        ac = result
-    }
-    
     mutating func executeAND(immediate oper: UInt8) {
-        accumulate(anding: oper)
+        (ac, sr) = CPU6502.and(ac, oper, status: sr)
     }
     
     mutating func executeAND(zeropage oper: UInt8) {
-        accumulate(anding: load(zeropage: oper))
+        (ac, sr) = CPU6502.and(ac, load(zeropage: oper), status: sr)
     }
     
     mutating func executeAND(zeropageX oper: UInt8) {
-        accumulate(anding: load(zeropageX: oper))
+        (ac, sr) = CPU6502.and(ac, load(zeropageX: oper), status: sr)
     }
     
     mutating func executeAND(absolute oper: UInt16) {
-        accumulate(anding: load(absolute: oper))
+        (ac, sr) = CPU6502.and(ac, load(absolute: oper), status: sr)
     }
     
     mutating func executeAND(absoluteX oper: UInt16) {
-        accumulate(anding: load(absoluteX: oper))
+        (ac, sr) = CPU6502.and(ac, load(absoluteX: oper), status: sr)
     }
     
     mutating func executeAND(absoluteY oper: UInt16) {
-        accumulate(anding: load(absoluteY: oper))
+        (ac, sr) = CPU6502.and(ac, load(absoluteY: oper), status: sr)
     }
     
     mutating func executeAND(indirectX oper: UInt16) {
-        accumulate(anding: load(indirectX: oper))
+        (ac, sr) = CPU6502.and(ac, load(indirectX: oper), status: sr)
     }
     
     mutating func executeAND(indirectY oper: UInt16) {
-        accumulate(anding: load(indirectY: oper))
+        (ac, sr) = CPU6502.and(ac, load(indirectY: oper), status: sr)
     }
 }
 
@@ -71,75 +66,7 @@ extension CPU6502 {
 // (zeropage)    AND (oper)   32     2        5         *
 extension CPU6502 {
     mutating func executeAND(zeropageIndirect oper: UInt8) {
-        accumulate(anding: load(zeropageIndirect: oper))
-    }
-}
-
-// EOR
-// Exclusive-OR Memory with Accumulator
-//
-// A EOR M -> A
-// N    Z    C    I    D    V
-// +    +    -    -    -    -
-// addressing    assembler    opc    bytes    cycles
-// immediate    EOR #oper    49    2    2
-// zeropage    EOR oper    45    2    3
-// zeropage,X    EOR oper,X    55    2    4
-// absolute    EOR oper    4D    3    4
-// absolute,X    EOR oper,X    5D    3    4*
-// absolute,Y    EOR oper,Y    59    3    4*
-// (indirect,X)    EOR (oper,X)    41    2    6
-// (indirect),Y    EOR (oper),Y    51    2    5*
-extension CPU6502 {
-    mutating func accumulate(xoring value: UInt8) {
-        let result = ac ^ value
-        ac = result
-    }
-    
-    mutating func executeEOR(immediate oper: UInt8) {
-        accumulate(xoring: oper)
-    }
-    
-    mutating func executeEOR(zeropage oper: UInt8) {
-        accumulate(xoring: load(zeropage: oper))
-    }
-    
-    mutating func executeEOR(zeropageX oper: UInt8) {
-        accumulate(xoring: load(zeropageX: oper))
-    }
-    
-    mutating func executeEOR(absolute oper: UInt16) {
-        accumulate(xoring: load(absolute: oper))
-    }
-    
-    mutating func executeEOR(absoluteX oper: UInt16) {
-        accumulate(xoring: load(absoluteX: oper))
-    }
-    
-    mutating func executeEOR(absoluteY oper: UInt16) {
-        accumulate(xoring: load(absoluteY: oper))
-    }
-    
-    mutating func executeEOR(indirectX oper: UInt16) {
-        accumulate(xoring: load(indirectX: oper))
-    }
-    
-    mutating func executeEOR(indirectY oper: UInt16) {
-        accumulate(xoring: load(indirectY: oper))
-    }
-}
-
-// EOR
-// Exclusive-OR Memory with Accumulator
-//
-// A EOR (ZPG) -> A
-// N    Z    C    I    D    V
-// +    +    -    -    -    -
-// addressing    assembler    opc    bytes    cycles    W65C02-only
-// (zeropage)    EOR (oper)   52     2        5         *
-extension CPU6502 {
-    mutating func executeEOR(zeropageIndirect oper: UInt8) {
-        accumulate(xoring: load(zeropageIndirect: oper))
+        (ac, sr) = CPU6502.and(ac, load(zeropageIndirect: oper), status: sr)
     }
 }
 
@@ -159,41 +86,36 @@ extension CPU6502 {
 // (indirect,X)  ORA (oper,X) 01     2        6
 // (indirect),Y  ORA (oper),Y 11     2        5*
 extension CPU6502 {
-    mutating func accumulate(oring value: UInt8) {
-        let result = ac | value
-        ac = result
-    }
-    
     mutating func executeORA(immediate oper: UInt8) {
-        accumulate(oring: oper)
+        (ac, sr) = CPU6502.or(ac, oper, status: sr)
     }
     
     mutating func executeORA(zeropage oper: UInt8) {
-        accumulate(oring: load(zeropage: oper))
+        (ac, sr) = CPU6502.or(ac, load(zeropage: oper), status: sr)
     }
     
     mutating func executeORA(zeropageX oper: UInt8) {
-        accumulate(oring: load(zeropageX: oper))
+        (ac, sr) = CPU6502.or(ac, load(zeropageX: oper), status: sr)
     }
     
     mutating func executeORA(absolute oper: UInt16) {
-        accumulate(oring: load(absolute: oper))
+        (ac, sr) = CPU6502.or(ac, load(absolute: oper), status: sr)
     }
     
     mutating func executeORA(absoluteX oper: UInt16) {
-        accumulate(oring: load(absoluteX: oper))
+        (ac, sr) = CPU6502.or(ac, load(absoluteX: oper), status: sr)
     }
     
     mutating func executeORA(absoluteY oper: UInt16) {
-        accumulate(oring: load(absoluteY: oper))
+        (ac, sr) = CPU6502.or(ac, load(absoluteY: oper), status: sr)
     }
     
     mutating func executeORA(indirectX oper: UInt16) {
-        accumulate(oring: load(indirectX: oper))
+        (ac, sr) = CPU6502.or(ac, load(indirectX: oper), status: sr)
     }
     
     mutating func executeORA(indirectY oper: UInt16) {
-        accumulate(oring: load(indirectY: oper))
+        (ac, sr) = CPU6502.or(ac, load(indirectY: oper), status: sr)
     }
 }
 
@@ -207,6 +129,69 @@ extension CPU6502 {
 // (zeropage)    ORA (oper)   12     2        5         *
 extension CPU6502 {
     mutating func executeORA(zeropageIndirect oper: UInt8) {
-        accumulate(oring: load(zeropageIndirect: oper))
+        (ac, sr) = CPU6502.or(ac, load(zeropageIndirect: oper), status: sr)
+    }
+}
+
+// EOR
+// Exclusive-OR Memory with Accumulator
+//
+// A EOR M -> A
+// N    Z    C    I    D    V
+// +    +    -    -    -    -
+// addressing    assembler    opc    bytes    cycles
+// immediate    EOR #oper    49    2    2
+// zeropage    EOR oper    45    2    3
+// zeropage,X    EOR oper,X    55    2    4
+// absolute    EOR oper    4D    3    4
+// absolute,X    EOR oper,X    5D    3    4*
+// absolute,Y    EOR oper,Y    59    3    4*
+// (indirect,X)    EOR (oper,X)    41    2    6
+// (indirect),Y    EOR (oper),Y    51    2    5*
+extension CPU6502 {
+    mutating func executeEOR(immediate oper: UInt8) {
+        (ac, sr) = CPU6502.xor(ac, oper, status: sr)
+    }
+    
+    mutating func executeEOR(zeropage oper: UInt8) {
+        (ac, sr) = CPU6502.xor(ac, load(zeropage: oper), status: sr)
+    }
+    
+    mutating func executeEOR(zeropageX oper: UInt8) {
+        (ac, sr) = CPU6502.xor(ac, load(zeropageX: oper), status: sr)
+    }
+    
+    mutating func executeEOR(absolute oper: UInt16) {
+        (ac, sr) = CPU6502.xor(ac, load(absolute: oper), status: sr)
+    }
+    
+    mutating func executeEOR(absoluteX oper: UInt16) {
+        (ac, sr) = CPU6502.xor(ac, load(absoluteX: oper), status: sr)
+    }
+    
+    mutating func executeEOR(absoluteY oper: UInt16) {
+        (ac, sr) = CPU6502.xor(ac, load(absoluteY: oper), status: sr)
+    }
+    
+    mutating func executeEOR(indirectX oper: UInt16) {
+        (ac, sr) = CPU6502.xor(ac, load(indirectX: oper), status: sr)
+    }
+    
+    mutating func executeEOR(indirectY oper: UInt16) {
+        (ac, sr) = CPU6502.xor(ac, load(indirectY: oper), status: sr)
+    }
+}
+
+// EOR
+// Exclusive-OR Memory with Accumulator
+//
+// A EOR (ZPG) -> A
+// N    Z    C    I    D    V
+// +    +    -    -    -    -
+// addressing    assembler    opc    bytes    cycles    W65C02-only
+// (zeropage)    EOR (oper)   52     2        5         *
+extension CPU6502 {
+    mutating func executeEOR(zeropageIndirect oper: UInt8) {
+        (ac, sr) = CPU6502.xor(ac, load(zeropageIndirect: oper), status: sr)
     }
 }

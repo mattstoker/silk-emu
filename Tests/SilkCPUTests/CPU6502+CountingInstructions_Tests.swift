@@ -11,104 +11,196 @@ import Testing
 // MARK: - Counting Instruction Tests
 
 @Suite("6502 CPU Counting Instruction Tests")
-class CPU6502CountingInstructionTests {
-    var memory: [UInt8] = Array((0x0000...0xFFFF).map { _ in UInt8.random(in: 0x00...0xFF) })
-    func memory(_ high: UInt8, _ low: UInt8) -> UInt8 { memory[Int(UInt16(high: high, low: low))] }
-    func memory(_ address: UInt16) -> UInt8 { memory[Int(address)] }
-    init() {
-        CPU6502.load = { address in return self.memory[Int(address)] }
-        CPU6502.store = { address, value in self.memory[Int(address)] = value }
+struct CPU6502CountingInstructionTests {
+    func expectedStatus(_ result: UInt8) -> UInt8 {
+        let negative = result & 0x80 != 0
+        let zero = result == 0
+        var status = UInt8.min
+        status = negative ? (status | CPU6502.srNMask) : (status & ~CPU6502.srNMask)
+        status = zero ? (status | CPU6502.srZMask) : (status & ~CPU6502.srZMask)
+        return status
     }
     
-    @Test func executeDECZeropage() {
-        var cpu = CPU6502()
-        let value = memory(CPU6502.zeropage, 0x13)
-        cpu.executeDEC(zeropage: 0x13)
-        #expect(memory(CPU6502.zeropage, 0x13) == value &- 1)
-    }
-    
-    @Test func executeDECZeropageX() {
-        var cpu = CPU6502(xr: 0x3B)
-        let value = memory(CPU6502.zeropage, 0x13 &+ 0x3B)
-        cpu.executeDEC(zeropageX: 0x13)
-        #expect(memory(CPU6502.zeropage, 0x13 &+ 0x3B) == value &- 1)
-    }
-    
-    @Test func executeDECAbsolute() {
-        var cpu = CPU6502()
-        let value = memory(0xBEEF)
-        cpu.executeDEC(absolute: 0xBEEF)
-        #expect(memory(0xBEEF) == value &- 1)
-    }
-    
-    @Test func executeDECAbsoluteX() {
-        var cpu = CPU6502(xr: 0x3B)
-        let value = memory(0xBEEF &+ 0x3B)
-        cpu.executeDEC(absoluteX: 0xBEEF)
-        #expect(memory(0xBEEF &+ 0x3B) == value &- 1)
-    }
-
-    @Test func executeDEC() {
-        var cpu = CPU6502(ac: 0x15)
-        cpu.executeDEC()
-        #expect(cpu == CPU6502(ac: 0x15 &- 1))
-    }
-
-    @Test func executeDEX() {
-        var cpu = CPU6502(xr: 0x25)
-        cpu.executeDEX()
-        #expect(cpu == CPU6502(xr: 0x25 &- 1))
-    }
-
-    @Test func executeDEY() {
-        var cpu = CPU6502(yr: 0x35)
-        cpu.executeDEY()
-        #expect(cpu == CPU6502(yr: 0x35 &- 1))
-    }
-
     @Test func executeINCZeropage() {
-        var cpu = CPU6502()
-        let value = memory(CPU6502.zeropage, 0x13)
-        cpu.executeINC(zeropage: 0x13)
-        #expect(memory(CPU6502.zeropage, 0x13) == value &+ 1)
+        let s = System(cpu: CPU6502())
+        for address in UInt8.min...UInt8.max {
+            let memoryOperand = s.cpu.load(zeropage: address)
+            let expectedResult = memoryOperand &+ 1
+            let expectedStatus = expectedStatus(expectedResult)
+            s.cpu.executeINC(zeropage: address)
+            #expect(s.cpu == CPU6502(sr: expectedStatus))
+            #expect(s.cpu.load(zeropage: address) == expectedResult)
+        }
     }
     
     @Test func executeINCZeropageX() {
-        var cpu = CPU6502(xr: 0x3B)
-        let value = memory(CPU6502.zeropage, 0x13 &+ 0x3B)
-        cpu.executeINC(zeropageX: 0x13)
-        #expect(memory(CPU6502.zeropage, 0x13 &+ 0x3B) == value &+ 1)
+        let s = System(cpu: CPU6502())
+        for address in UInt8.min...UInt8.max {
+            for xr in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(xr: xr)
+                let memoryOperand = s.cpu.load(zeropageX: address)
+                let expectedResult = memoryOperand &+ 1
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeINC(zeropageX: address)
+                #expect(s.cpu == CPU6502(xr: xr, sr: expectedStatus))
+                #expect(s.cpu.load(zeropageX: address) == expectedResult)
+            }
+        }
     }
     
     @Test func executeINCAbsolute() {
-        var cpu = CPU6502()
-        let value = memory(0xBEEF)
-        cpu.executeINC(absolute: 0xBEEF)
-        #expect(memory(0xBEEF) == value &+ 1)
+        let s = System(cpu: CPU6502())
+        for address in UInt16.min...UInt16.max {
+            s.cpu = CPU6502()
+            let memoryOperand = s.cpu.load(absolute: address)
+            let expectedResult = memoryOperand &+ 1
+            let expectedStatus = expectedStatus(expectedResult)
+            s.cpu.executeINC(absolute: address)
+            #expect(s.cpu == CPU6502(sr: expectedStatus))
+            #expect(s.cpu.load(absolute: address) == expectedResult)
+        }
     }
     
     @Test func executeINCAbsoluteX() {
-        var cpu = CPU6502(xr: 0x3B)
-        let value = memory(0xBEEF &+ 0x3B)
-        cpu.executeINC(absoluteX: 0xBEEF)
-        #expect(memory(0xBEEF &+ 0x3B) == value &+ 1)
+        let s = System(cpu: CPU6502())
+        for address in UInt16.min...UInt16(0x0123) { //UInt16.min...UInt16.max {
+            for xr in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(xr: xr)
+                let memoryOperand = s.cpu.load(absoluteX: address)
+                let expectedResult = memoryOperand &+ 1
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeINC(absoluteX: address)
+                #expect(s.cpu == CPU6502(xr: xr, sr: expectedStatus))
+                #expect(s.cpu.load(absoluteX: address) == expectedResult)
+            }
+        }
     }
 
     @Test func executeINC() {
-        var cpu = CPU6502(ac: 0x15)
-        cpu.executeINC()
-        #expect(cpu == CPU6502(ac: 0x15 &+ 1))
+        let s = System(cpu: CPU6502())
+        for ac in UInt8.min...UInt8.max {
+            s.cpu = CPU6502(ac: ac)
+            let registerOperand = ac
+            let expectedResult = registerOperand &+ 1
+            let expectedStatus = expectedStatus(expectedResult)
+            s.cpu.executeINC()
+            #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+        }
     }
 
     @Test func executeINX() {
-        var cpu = CPU6502(xr: 0x25)
-        cpu.executeINX()
-        #expect(cpu == CPU6502(xr: 0x25 &+ 1))
+        let s = System(cpu: CPU6502())
+        for xr in UInt8.min...UInt8.max {
+            s.cpu = CPU6502(xr: xr)
+            let registerOperand = xr
+            let expectedResult = registerOperand &+ 1
+            let expectedStatus = expectedStatus(expectedResult)
+            s.cpu.executeINX()
+            #expect(s.cpu == CPU6502(xr: expectedResult, sr: expectedStatus))
+        }
     }
 
     @Test func executeINY() {
-        var cpu = CPU6502(yr: 0x35)
-        cpu.executeINY()
-        #expect(cpu == CPU6502(yr: 0x35 &+ 1))
+        let s = System(cpu: CPU6502())
+        for yr in UInt8.min...UInt8.max {
+            s.cpu = CPU6502(yr: yr)
+            let registerOperand = yr
+            let expectedResult = registerOperand &+ 1
+            let expectedStatus = expectedStatus(expectedResult)
+            s.cpu.executeINY()
+            #expect(s.cpu == CPU6502(yr: expectedResult, sr: expectedStatus))
+        }
+    }
+    
+    @Test func executeDECZeropage() {
+        let s = System(cpu: CPU6502())
+        for address in UInt8.min...UInt8.max {
+            s.cpu = CPU6502()
+            let memoryOperand = Int8(bitPattern: s.cpu.load(zeropage: address))
+            let expectedResult = UInt8((Int16(memoryOperand) - 1) & 0xFF)
+            let expectedStatus = expectedStatus(expectedResult)
+            s.cpu.executeDEC(zeropage: address)
+            #expect(s.cpu == CPU6502(sr: expectedStatus))
+            #expect(s.cpu.load(zeropage: address) == expectedResult)
+        }
+    }
+    
+    @Test func executeDECZeropageX() {
+        let s = System(cpu: CPU6502())
+        for address in UInt8.min...UInt8.max {
+            for xr in UInt8.min...UInt8.max {
+                s.cpu.xr = xr
+                let memoryOperand = Int8(bitPattern: s.cpu.load(zeropageX: address))
+                let expectedResult = UInt8((Int16(memoryOperand) - 1) & 0xFF)
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeDEC(zeropageX: address)
+                #expect(s.cpu == CPU6502(xr: xr, sr: expectedStatus))
+                #expect(s.cpu.load(zeropageX: address) == expectedResult)
+            }
+        }
+    }
+    
+    @Test func executeDECAbsolute() {
+        let s = System(cpu: CPU6502())
+        for address in UInt16.min...UInt16.max {
+            s.cpu = CPU6502()
+            let memoryOperand = Int8(bitPattern: s.cpu.load(absolute: address))
+            let expectedResult = UInt8((Int16(memoryOperand) - 1) & 0xFF)
+            let expectedStatus = expectedStatus(expectedResult)
+            s.cpu.executeDEC(absolute: address)
+            #expect(s.cpu == CPU6502(sr: expectedStatus))
+            #expect(s.cpu.load(absolute: address) == expectedResult)
+        }
+    }
+    
+    @Test func executeDECAbsoluteX() {
+        let s = System(cpu: CPU6502())
+        for address in UInt16.min...UInt16(0x0123) { //UInt16.min...UInt16.max {
+            for xr in UInt8.min...UInt8.max {
+                s.cpu = CPU6502(xr: xr)
+                let memoryOperand = Int8(bitPattern: s.cpu.load(absoluteX: address))
+                let expectedResult = UInt8((Int16(memoryOperand) - 1) & 0xFF)
+                let expectedStatus = expectedStatus(expectedResult)
+                s.cpu.executeDEC(absoluteX: address)
+                #expect(s.cpu == CPU6502(xr: xr, sr: expectedStatus))
+                #expect(s.cpu.load(absoluteX: address) == expectedResult)
+            }
+        }
+    }
+
+    @Test func executeDEC() {
+        let s = System(cpu: CPU6502())
+        for ac in UInt8.min...UInt8.max {
+            s.cpu = CPU6502(ac: ac)
+            let registerOperand = ac
+            let expectedResult = UInt8((Int16(registerOperand) - 1) & 0xFF)
+            let expectedStatus = expectedStatus(expectedResult)
+            s.cpu.executeDEC()
+            #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus))
+        }
+    }
+
+    @Test func executeDEX() {
+        let s = System(cpu: CPU6502())
+        for xr in UInt8.min...UInt8.max {
+            s.cpu = CPU6502(xr: xr)
+            let registerOperand = xr
+            let expectedResult = UInt8((Int16(registerOperand) - 1) & 0xFF)
+            let expectedStatus = expectedStatus(expectedResult)
+            s.cpu.executeDEX()
+            #expect(s.cpu == CPU6502(xr: expectedResult, sr: expectedStatus))
+        }
+    }
+
+    @Test func executeDEY() {
+        let s = System(cpu: CPU6502())
+        for yr in UInt8.min...UInt8.max {
+            s.cpu = CPU6502(yr: yr)
+            let registerOperand = yr
+            let expectedResult = UInt8((Int16(registerOperand) - 1) & 0xFF)
+            let expectedStatus = expectedStatus(expectedResult)
+            s.cpu.executeDEY()
+            #expect(s.cpu == CPU6502(yr: expectedResult, sr: expectedStatus))
+        }
     }
 }

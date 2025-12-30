@@ -23,43 +23,36 @@
 // (indirect,X)  ADC (oper,X) 61     2        6
 // (indirect),Y  ADC (oper),Y 71     2        5*
 extension CPU6502 {
-    mutating func accumulate(adding value: UInt8) {
-        let sum = UInt16(ac) + UInt16(value) + (srC ? 1 : 0)
-        let carry = sum > 0xFF
-        ac = UInt8(sum & 0xFF)
-        sr = carry ? (sr | CPU6502.srCMask) : (sr & ~CPU6502.srCMask)
-    }
-    
     mutating func executeADC(immediate oper: UInt8) {
-        accumulate(adding: oper)
+        (ac, sr) = CPU6502.add(ac, oper, status: sr)
     }
     
     mutating func executeADC(zeropage oper: UInt8) {
-        accumulate(adding: load(zeropage: oper))
+        (ac, sr) = CPU6502.add(ac, load(zeropage: oper), status: sr)
     }
     
     mutating func executeADC(zeropageX oper: UInt8) {
-        accumulate(adding: load(zeropageX: oper))
+        (ac, sr) = CPU6502.add(ac, load(zeropageX: oper), status: sr)
     }
     
     mutating func executeADC(absolute oper: UInt16) {
-        accumulate(adding: load(absolute: oper))
+        (ac, sr) = CPU6502.add(ac, load(absolute: oper), status: sr)
     }
     
     mutating func executeADC(absoluteX oper: UInt16) {
-        accumulate(adding: load(absoluteX: oper))
+        (ac, sr) = CPU6502.add(ac, load(absoluteX: oper), status: sr)
     }
     
     mutating func executeADC(absoluteY oper: UInt16) {
-        accumulate(adding: load(absoluteY: oper))
+        (ac, sr) = CPU6502.add(ac, load(absoluteY: oper), status: sr)
     }
     
     mutating func executeADC(indirectX oper: UInt16) {
-        accumulate(adding: load(indirectX: oper))
+        (ac, sr) = CPU6502.add(ac, load(indirectX: oper), status: sr)
     }
     
     mutating func executeADC(indirectY oper: UInt16) {
-        accumulate(adding: load(indirectY: oper))
+        (ac, sr) = CPU6502.add(ac, load(indirectY: oper), status: sr)
     }
 }
 
@@ -73,7 +66,7 @@ extension CPU6502 {
 // (zeropage)    ADC (oper)   72     2        5         *
 extension CPU6502 {
     mutating func executeADC(zeropageIndirect oper: UInt8) {
-        accumulate(adding: load(zeropageIndirect: oper))
+        (ac, sr) = CPU6502.add(ac, load(zeropageIndirect: oper), status: sr)
     }
 }
 
@@ -93,40 +86,36 @@ extension CPU6502 {
 // (indirect,X)  SBC (oper,X) E1     2        6
 // (indirect),Y  SBC (oper),Y F1     2        5*
 extension CPU6502 {
-    mutating func accumulate(subtracting value: UInt8) {
-        accumulate(adding: ~value)
-    }
-    
     mutating func executeSBC(immediate oper: UInt8) {
-        accumulate(subtracting: oper)
+        (ac, sr) = CPU6502.subtract(ac, oper, status: sr)
     }
     
     mutating func executeSBC(zeropage oper: UInt8) {
-        accumulate(subtracting: load(zeropage: oper))
+        (ac, sr) = CPU6502.subtract(ac, load(zeropage: oper), status: sr)
     }
     
     mutating func executeSBC(zeropageX oper: UInt8) {
-        accumulate(subtracting: load(zeropageX: oper))
+        (ac, sr) = CPU6502.subtract(ac, load(zeropageX: oper), status: sr)
     }
     
     mutating func executeSBC(absolute oper: UInt16) {
-        accumulate(subtracting: load(absolute: oper))
+        (ac, sr) = CPU6502.subtract(ac, load(absolute: oper), status: sr)
     }
     
     mutating func executeSBC(absoluteX oper: UInt16) {
-        accumulate(subtracting: load(absoluteX: oper))
+        (ac, sr) = CPU6502.subtract(ac, load(absoluteX: oper), status: sr)
     }
     
     mutating func executeSBC(absoluteY oper: UInt16) {
-        accumulate(subtracting: load(absoluteY: oper))
+        (ac, sr) = CPU6502.subtract(ac, load(absoluteY: oper), status: sr)
     }
     
     mutating func executeSBC(indirectX oper: UInt16) {
-        accumulate(subtracting: load(indirectX: oper))
+        (ac, sr) = CPU6502.subtract(ac, load(indirectX: oper), status: sr)
     }
     
     mutating func executeSBC(indirectY oper: UInt16) {
-        accumulate(subtracting: load(indirectY: oper))
+        (ac, sr) = CPU6502.subtract(ac, load(indirectY: oper), status: sr)
     }
 }
 
@@ -140,6 +129,6 @@ extension CPU6502 {
 // (zeropage)    SBC (oper)   F2     2        5         *
 extension CPU6502 {
     mutating func executeSBC(zeropageIndirect oper: UInt8) {
-        accumulate(subtracting: load(zeropageIndirect: oper))
+        (ac, sr) = CPU6502.subtract(ac, load(zeropageIndirect: oper), status: sr)
     }
 }

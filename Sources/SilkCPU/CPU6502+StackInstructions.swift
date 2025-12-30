@@ -18,7 +18,7 @@
 extension CPU6502 {
     mutating func executePHA() {
         let address = UInt16(high: CPU6502.stackpage, low: sp)
-        store(absolute: address, value: ac)
+        store(absolute: address, ac)
         sp = sp &- 1
     }
 }
@@ -37,7 +37,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePHP() {
         let address = UInt16(high: CPU6502.stackpage, low: sp)
-        store(absolute: address, value: sr | CPU6502.srBMask | CPU6502.srXMask)
+        store(absolute: address, sr | CPU6502.srBMask | CPU6502.srXMask)
         sp = sp &- 1
     }
 }
@@ -53,7 +53,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePHX() {
         let address = UInt16(high: CPU6502.stackpage, low: sp)
-        store(absolute: address, value: xr)
+        store(absolute: address, xr)
         sp = sp &- 1
     }
 }
@@ -69,7 +69,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePHY() {
         let address = UInt16(high: CPU6502.stackpage, low: sp)
-        store(absolute: address, value: yr)
+        store(absolute: address, yr)
         sp = sp &- 1
     }
 }

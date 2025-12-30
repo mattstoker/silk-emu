@@ -156,31 +156,31 @@ extension CPU6502 {
 // (indirect),Y  STA (oper),Y 91     2        6
 extension CPU6502 {
     mutating func executeSTA(zeropage oper: UInt8) {
-        store(zeropage: oper, value: ac)
+        store(zeropage: oper, ac)
     }
     
     mutating func executeSTA(zeropageX oper: UInt8) {
-        store(zeropageX: oper, value: ac)
+        store(zeropageX: oper, ac)
     }
     
     mutating func executeSTA(absolute oper: UInt16) {
-        store(absolute: oper, value: ac)
+        store(absolute: oper, ac)
     }
     
     mutating func executeSTA(absoluteX oper: UInt16) {
-        store(absoluteX: oper, value: ac)
+        store(absoluteX: oper, ac)
     }
     
     mutating func executeSTA(absoluteY oper: UInt16) {
-        store(absoluteY: oper, value: ac)
+        store(absoluteY: oper, ac)
     }
     
     mutating func executeSTA(indirectX oper: UInt16) {
-        store(indirectX: oper, value: ac)
+        store(indirectX: oper, ac)
     }
     
     mutating func executeSTA(indirectY oper: UInt16) {
-        store(indirectY: oper, value: ac)
+        store(indirectY: oper, ac)
     }
 }
 
@@ -194,7 +194,7 @@ extension CPU6502 {
 // (zeropage)    SBC (oper)   92     2        5         *
 extension CPU6502 {
     mutating func executeSTA(zeropageIndirect oper: UInt8) {
-        store(zeropageIndirect: oper, value: ac)
+        store(zeropageIndirect: oper, ac)
     }
 }
 
@@ -210,15 +210,15 @@ extension CPU6502 {
 // absolute      STX oper     8E    3    4
 extension CPU6502 {
     mutating func executeSTX(zeropage oper: UInt8) {
-        store(zeropage: oper, value: xr)
+        store(zeropage: oper, xr)
     }
     
     mutating func executeSTX(zeropageY oper: UInt8) {
-        store(zeropageY: oper, value: xr)
+        store(zeropageY: oper, xr)
     }
     
     mutating func executeSTX(absolute oper: UInt16) {
-        store(absolute: oper, value: xr)
+        store(absolute: oper, xr)
     }
 }
 
@@ -234,15 +234,15 @@ extension CPU6502 {
 // absolute      STY oper     8C    3    4
 extension CPU6502 {
     mutating func executeSTY(zeropage oper: UInt8) {
-        store(zeropage: oper, value: yr)
+        store(zeropage: oper, yr)
     }
     
     mutating func executeSTY(zeropageX oper: UInt8) {
-        store(zeropageX: oper, value: yr)
+        store(zeropageX: oper, yr)
     }
     
     mutating func executeSTY(absolute oper: UInt16) {
-        store(absolute: oper, value: yr)
+        store(absolute: oper, yr)
     }
 }
 
@@ -259,19 +259,19 @@ extension CPU6502 {
 // absolute,X    STZ oper,X   9E     3        4*        *
 extension CPU6502 {
     mutating func executeSTZ(zeropage oper: UInt8) {
-        store(zeropage: oper, value: 0x00)
+        store(zeropage: oper, 0x00)
     }
     
     mutating func executeSTZ(zeropageX oper: UInt8) {
-        store(zeropageX: oper, value: 0x00)
+        store(zeropageX: oper, 0x00)
     }
     
     mutating func executeSTZ(absolute oper: UInt16) {
-        store(absolute: oper, value: 0x00)
+        store(absolute: oper, 0x00)
     }
     
     mutating func executeSTZ(absoluteX oper: UInt16) {
-        store(absoluteX: oper, value: 0x00)
+        store(absoluteX: oper, 0x00)
     }
 }
 
