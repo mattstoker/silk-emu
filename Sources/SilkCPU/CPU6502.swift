@@ -154,6 +154,18 @@ extension CPU6502 {
         return (result: result, status: status)
     }
     
+    static func bit(_ a: UInt8, _ b: UInt8, status: UInt8) -> (result: UInt8, status: UInt8) {
+        let result = a & b
+        let zero = result == 0
+        let signBitSet = a & 0b10000000 != 0
+        let semsBitSet = a & 0b01000000 != 0
+        var status = status
+        status = zero ? (status | CPU6502.srZMask) : (status & ~CPU6502.srZMask)
+        status = signBitSet ? (status | 0b10000000) : (status & ~0b10000000)
+        status = semsBitSet ? (status | 0b01000000) : (status & ~0b01000000)
+        return (result: result, status: status)
+    }
+    
     static func add(_ a: UInt8, _ b: UInt8, status: UInt8) -> (result: UInt8, status: UInt8) {
         let sum = UInt16(a) + UInt16(b) + (status & CPU6502.srCMask == 0 ? 0 : 1)
         let result = UInt8(sum & 0xFF)
