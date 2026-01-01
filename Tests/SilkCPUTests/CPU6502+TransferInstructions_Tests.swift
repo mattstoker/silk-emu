@@ -50,14 +50,14 @@ struct CPU6502LDTests {
     
     @Test func executeLDAIndirectX() {
         let s = System(cpu: CPU6502(xr: 0x63))
-        s.cpu.executeLDA(indirectX: 0xABCD)
-        #expect(s.cpu == CPU6502(ac: s.cpu.load(indirectX: 0xABCD), xr: 0x63))
+        s.cpu.executeLDA(preIndirectX: 0xABCD)
+        #expect(s.cpu == CPU6502(ac: s.cpu.load(preIndirectX: 0xABCD), xr: 0x63))
     }
     
     @Test func executeLDAIndirectY() {
         let s = System(cpu: CPU6502(yr: 0x74))
-        s.cpu.executeLDA(indirectY: 0xABCD)
-        #expect(s.cpu == CPU6502(ac: s.cpu.load(indirectY: 0xABCD), yr: 0x74))
+        s.cpu.executeLDA(postIndirectY: 0xABCD)
+        #expect(s.cpu == CPU6502(ac: s.cpu.load(postIndirectY: 0xABCD), yr: 0x74))
     }
     
     @Test func executeLDAZeropageIndirect() {
@@ -163,14 +163,14 @@ class CPU6502STTests {
     
     @Test func executeSTAIndirectX() {
         let s = System(cpu: CPU6502(ac: 0x55, xr: 0x63))
-        s.cpu.executeSTA(indirectX: 0xABCD)
-        #expect(s.cpu.load(indirectX: 0xABCD) == 0x55)
+        s.cpu.executeSTA(preIndirectX: 0xABCD)
+        #expect(s.cpu.load(preIndirectX: 0xABCD) == 0x55)
     }
     
     @Test func executeSTAIndirectY() {
         let s = System(cpu: CPU6502(ac: 0x66, yr: 0x74))
-        s.cpu.executeSTA(indirectY: 0xABCD)
-        #expect(s.cpu.load(indirectY: 0xABCD) == 0x66)
+        s.cpu.executeSTA(postIndirectY: 0xABCD)
+        #expect(s.cpu.load(postIndirectY: 0xABCD) == 0x66)
     }
     
     @Test func executeSTAZeropageIndirect() {

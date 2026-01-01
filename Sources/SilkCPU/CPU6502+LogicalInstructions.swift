@@ -47,12 +47,12 @@ extension CPU6502 {
         (ac, sr) = CPU6502.and(ac, load(absoluteY: oper), status: sr)
     }
     
-    mutating func executeAND(indirectX oper: UInt16) {
-        (ac, sr) = CPU6502.and(ac, load(indirectX: oper), status: sr)
+    mutating func executeAND(preIndirectX oper: UInt16) {
+        (ac, sr) = CPU6502.and(ac, load(preIndirectX: oper), status: sr)
     }
     
-    mutating func executeAND(indirectY oper: UInt16) {
-        (ac, sr) = CPU6502.and(ac, load(indirectY: oper), status: sr)
+    mutating func executeAND(postIndirectY oper: UInt16) {
+        (ac, sr) = CPU6502.and(ac, load(postIndirectY: oper), status: sr)
     }
 }
 
@@ -110,12 +110,12 @@ extension CPU6502 {
         (ac, sr) = CPU6502.or(ac, load(absoluteY: oper), status: sr)
     }
     
-    mutating func executeORA(indirectX oper: UInt16) {
-        (ac, sr) = CPU6502.or(ac, load(indirectX: oper), status: sr)
+    mutating func executeORA(preIndirectX oper: UInt16) {
+        (ac, sr) = CPU6502.or(ac, load(preIndirectX: oper), status: sr)
     }
     
-    mutating func executeORA(indirectY oper: UInt16) {
-        (ac, sr) = CPU6502.or(ac, load(indirectY: oper), status: sr)
+    mutating func executeORA(postIndirectY oper: UInt16) {
+        (ac, sr) = CPU6502.or(ac, load(postIndirectY: oper), status: sr)
     }
 }
 
@@ -173,12 +173,12 @@ extension CPU6502 {
         (ac, sr) = CPU6502.xor(ac, load(absoluteY: oper), status: sr)
     }
     
-    mutating func executeEOR(indirectX oper: UInt16) {
-        (ac, sr) = CPU6502.xor(ac, load(indirectX: oper), status: sr)
+    mutating func executeEOR(preIndirectX oper: UInt16) {
+        (ac, sr) = CPU6502.xor(ac, load(preIndirectX: oper), status: sr)
     }
     
-    mutating func executeEOR(indirectY oper: UInt16) {
-        (ac, sr) = CPU6502.xor(ac, load(indirectY: oper), status: sr)
+    mutating func executeEOR(postIndirectY oper: UInt16) {
+        (ac, sr) = CPU6502.xor(ac, load(postIndirectY: oper), status: sr)
     }
 }
 

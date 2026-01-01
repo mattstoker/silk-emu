@@ -189,164 +189,240 @@ extension CPU6502 {
     }
 }
 
-// MARK: Memory Addressing Modes
+// MARK: Memory Addressing
 
 extension CPU6502 {
     static let zeropage: UInt8 = 0x00
     static let stackpage: UInt8 = 0x01
     
+    func address(zeropage oper: UInt8) -> UInt16 {
+        return UInt16(high: CPU6502.zeropage, low: oper)
+    }
+    
+    func address(zeropageX oper: UInt8) -> UInt16 {
+        return UInt16(high: CPU6502.zeropage, low: oper &+ xr)
+    }
+    
+    func address(zeropageY oper: UInt8) -> UInt16 {
+        return UInt16(high: CPU6502.zeropage, low: oper &+ yr)
+    }
+    
+    func address(absolute oper: UInt16) -> UInt16 {
+        let address = oper
+        return address
+    }
+    
+    func address(absoluteX oper: UInt16) -> UInt16 {
+        let address = oper &+ UInt16(xr)
+        return address
+    }
+    
+    func address(absoluteY oper: UInt16) -> UInt16 {
+        let address = oper &+ UInt16(yr)
+        return address
+    }
+    
+    func address(indirect oper: UInt16) -> UInt16 {
+        let pointer = oper
+        let low = load(pointer)
+        let high = load(pointer &+ 1)
+        let address = UInt16(high: high, low: low)
+        return address
+    }
+
+    func address(preIndirectX oper: UInt16) -> UInt16 {
+        let pointer = oper &+ UInt16(xr)
+        let low = load(pointer)
+        let high = load(pointer &+ 1)
+        let address = UInt16(high: high, low: low)
+        return address
+    }
+    
+    func address(postIndirectY oper: UInt16) -> UInt16 {
+        let pointer = oper
+        let low = load(pointer)
+        let high = load(pointer &+ 1)
+        let address = UInt16(high: high, low: low) &+ UInt16(yr)
+        return address
+    }
+
+    func address(zeropageIndirect oper: UInt8) -> UInt16 {
+        let pointer = UInt16(high: CPU6502.zeropage, low: oper)
+        let low = load(pointer)
+        let high = load(pointer &+ 1)
+        let address = UInt16(high: high, low: low)
+        return address
+    }
+    
+    func address(stackpage oper: UInt8) -> UInt16 {
+        let address = UInt16(high: CPU6502.stackpage, low: oper)
+        return address
+    }
+    
+    func address(relative oper: UInt8, zeroOffset: Int8 = 0) -> UInt16 {
+        let address = UInt16(truncatingIfNeeded: Int32(pc) &+ Int32(zeroOffset) &+ Int32(Int8(bitPattern: oper)))
+        return address
+    }
+}
+
+// MARK: Load & Store
+
+extension CPU6502 {
     func load(zeropage oper: UInt8) -> UInt8 {
-        let address = UInt16(high: CPU6502.zeropage, low: oper)
+        let address = address(zeropage: oper)
         let value = load(address)
         return value
     }
     
     func load(zeropageX oper: UInt8) -> UInt8 {
-        let address = UInt16(high: CPU6502.zeropage, low: oper &+ xr)
+        let address = address(zeropageX: oper)
         let value = load(address)
         return value
     }
     
     func load(zeropageY oper: UInt8) -> UInt8 {
-        let address = UInt16(high: CPU6502.zeropage, low: oper &+ yr)
+        let address = address(zeropageY: oper)
         let value = load(address)
         return value
     }
     
     func load(absolute oper: UInt16) -> UInt8 {
-        let address = oper
+        let address = address(absolute: oper)
         let value = load(address)
         return value
     }
     
     func load(absoluteX oper: UInt16) -> UInt8 {
-        let address = oper &+ UInt16(xr)
+        let address = address(absoluteX: oper)
         let value = load(address)
         return value
     }
     
     func load(absoluteY oper: UInt16) -> UInt8 {
-        let address = oper &+ UInt16(yr)
+        let address = address(absoluteY: oper)
         let value = load(address)
         return value
     }
     
-    func load(indirectX oper: UInt16) -> UInt8 {
-        let pointer = oper &+ UInt16(xr)
-        let low = load(pointer)
-        let high = load(pointer &+ 1)
-        let address = UInt16(high: high, low: low)
+    func load(indirect oper: UInt16) -> UInt8 {
+        let address = address(indirect: oper)
         let value = load(address)
         return value
     }
     
-    func load(indirectY oper: UInt16) -> UInt8 {
-        let pointer = oper
-        let low = load(pointer)
-        let high = load(pointer &+ 1)
-        let address = UInt16(high: high, low: low) &+ UInt16(yr)
+    func load(preIndirectX oper: UInt16) -> UInt8 {
+        let address = address(preIndirectX: oper)
+        let value = load(address)
+        return value
+    }
+    
+    func load(postIndirectY oper: UInt16) -> UInt8 {
+        let address = address(postIndirectY: oper)
         let value = load(address)
         return value
     }
     
     func load(zeropageIndirect oper: UInt8) -> UInt8 {
-        let pointer = UInt16(high: CPU6502.zeropage, low: oper)
-        let low = load(pointer)
-        let high = load(pointer &+ 1)
-        let address = UInt16(high: high, low: low)
+        let address = address(zeropageIndirect: oper)
         let value = load(address)
         return value
     }
     
     func load(stackpage oper: UInt8) -> UInt8 {
-        let address = UInt16(high: CPU6502.stackpage, low: oper)
+        let address = address(stackpage: oper)
         let value = load(address)
         return value
     }
     
     func load(relative oper: UInt8) -> UInt8 {
-        let address = pc &+ UInt16(oper)
+        let address = address(relative: oper)
         let value = load(address)
         return value
     }
-    
+}
+
+extension CPU6502 {
     func store(zeropage oper: UInt8, _ value: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper)
+        let address = address(zeropage: oper)
         store(address, value)
     }
     
     func store(zeropageX oper: UInt8, _ value: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper &+ xr)
+        let address = address(zeropageX: oper)
         store(address, value)
     }
     
     func store(zeropageY oper: UInt8, _ value: UInt8) {
-        let address = UInt16(high: CPU6502.zeropage, low: oper &+ yr)
+        let address = address(zeropageY: oper)
         store(address, value)
     }
     
     func store(absolute oper: UInt16, _ value: UInt8) {
-        let address = oper
+        let address = address(absolute: oper)
         store(address, value)
     }
     
     func store(absoluteX oper: UInt16, _ value: UInt8) {
-        let address = oper &+ UInt16(xr)
+        let address = address(absoluteX: oper)
         store(address, value)
     }
     
     func store(absoluteY oper: UInt16, _ value: UInt8) {
-        let address = oper &+ UInt16(yr)
+        let address = address(absoluteY: oper)
         store(address, value)
     }
     
-    func store(indirectX oper: UInt16, _ value: UInt8) {
-        let pointer = oper &+ UInt16(xr)
-        let low = load(pointer)
-        let high = load(pointer &+ 1)
-        let address = UInt16(high: high, low: low)
+    func store(indirect oper: UInt16, _ value: UInt8) {
+        let address = address(indirect: oper)
         store(address, value)
     }
     
-    func store(indirectY oper: UInt16, _ value: UInt8) {
-        let pointer = oper
-        let low = load(pointer)
-        let high = load(pointer &+ 1)
-        let address = UInt16(high: high, low: low) &+ UInt16(yr)
+    func store(preIndirectX oper: UInt16, _ value: UInt8) {
+        let address = address(preIndirectX: oper)
+        store(address, value)
+    }
+    
+    func store(postIndirectY oper: UInt16, _ value: UInt8) {
+        let address = address(postIndirectY: oper)
         store(address, value)
     }
 
     func store(zeropageIndirect oper: UInt8, _ value: UInt8) {
-        let pointer = UInt16(high: CPU6502.zeropage, low: oper)
-        let low = load(pointer)
-        let high = load(pointer &+ 1)
-        let address = UInt16(high: high, low: low)
+        let address = address(zeropageIndirect: oper)
         store(address, value)
     }
     
     func store(stackpage oper: UInt8, _ value: UInt8) {
-        let address = UInt16(high: CPU6502.stackpage, low: oper)
+        let address = address(stackpage: oper)
         store(address, value)
     }
     
     func store(relative oper: UInt8, _ value: UInt8) {
-        let address = pc &+ UInt16(oper)
+        let address = address(relative: oper)
         store(address, value)
     }
 }
 
-// MARK: Branch & Jump
+// MARK: NOP Instruction
 
+// NOP
+// No Operation
+//
+// ---
+// N    Z    C    I    D    V
+// -    -    -    -    -    -
+// addressing    assembler    opc    bytes    cycles
+// implied       NOP          EA     1        2
 extension CPU6502 {
-    static func address(relative oper: UInt16, _ value: UInt8) -> UInt16 {
-        return UInt16(truncatingIfNeeded: Int32(oper) &+ Int32(Int8(bitPattern: value)))
+    mutating func executeNOP() {
+        ()
     }
 }
 
 // MARK: Conveniences
 
 extension UInt16 {
-    fileprivate init(high: UInt8, low: UInt8) {
+    init(high: UInt8, low: UInt8) {
         self = (UInt16(high) << 8) &+ UInt16(low)
     }
 }

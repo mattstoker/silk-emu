@@ -5,7 +5,7 @@
 //  Created by Matt Stoker on 12/31/25.
 //
 
-fileprivate let branchInstructionSize: UInt16 = 2
+fileprivate let branchInstructionSize: Int8 = 2
 
 // BNE
 // Branch on Result not Zero
@@ -18,7 +18,7 @@ fileprivate let branchInstructionSize: UInt16 = 2
 extension CPU6502 {
     mutating func executeBNE(relative oper: UInt8) {
         if sr & CPU6502.srZMask == 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
 }
@@ -34,7 +34,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeBEQ(relative oper: UInt8) {
         if sr & CPU6502.srZMask != 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
 }
@@ -50,7 +50,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeBCC(relative oper: UInt8) {
         if sr & CPU6502.srCMask == 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
 }
@@ -66,7 +66,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeBCS(relative oper: UInt8) {
         if sr & CPU6502.srCMask != 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
 }
@@ -82,7 +82,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeBPL(relative oper: UInt8) {
         if sr & CPU6502.srNMask == 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
 }
@@ -98,7 +98,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeBMI(relative oper: UInt8) {
         if sr & CPU6502.srNMask != 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
 }
@@ -114,7 +114,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeBVC(relative oper: UInt8) {
         if sr & CPU6502.srVMask == 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
 }
@@ -130,7 +130,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeBVS(relative oper: UInt8) {
         if sr & CPU6502.srVMask != 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
 }
@@ -163,49 +163,49 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeBBR0(relative oper: UInt8) {
         if ac & 0b00000001 == 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBR1(relative oper: UInt8) {
         if ac & 0b00000010 == 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBR2(relative oper: UInt8) {
         if ac & 0b00000100 == 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBR3(relative oper: UInt8) {
         if ac & 0b00001000 == 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBR4(relative oper: UInt8) {
         if ac & 0b00010000 == 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBR5(relative oper: UInt8) {
         if ac & 0b00100000 == 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBR6(relative oper: UInt8) {
         if ac & 0b01000000 == 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBR7(relative oper: UInt8) {
         if ac & 0b10000000 == 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
 }
@@ -235,49 +235,49 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeBBS0(relative oper: UInt8) {
         if ac & 0b00000001 != 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBS1(relative oper: UInt8) {
         if ac & 0b00000010 != 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBS2(relative oper: UInt8) {
         if ac & 0b00000100 != 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBS3(relative oper: UInt8) {
         if ac & 0b00001000 != 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBS4(relative oper: UInt8) {
         if ac & 0b00010000 != 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBS5(relative oper: UInt8) {
         if ac & 0b00100000 != 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBS6(relative oper: UInt8) {
         if ac & 0b01000000 != 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
     
     mutating func executeBBS7(relative oper: UInt8) {
         if ac & 0b10000000 != 0 {
-            pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+            pc = address(relative: oper, zeroOffset: branchInstructionSize)
         }
     }
 }
@@ -296,6 +296,6 @@ extension CPU6502 {
 // relative      BRA oper     80     2        3*        *
 extension CPU6502 {
     mutating func executeBRA(relative oper: UInt8) {
-        pc = CPU6502.address(relative: pc &+ branchInstructionSize, oper)
+        pc = address(relative: oper, zeroOffset: branchInstructionSize)
     }
 }

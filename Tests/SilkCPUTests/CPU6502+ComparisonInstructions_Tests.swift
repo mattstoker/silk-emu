@@ -108,9 +108,9 @@ struct CPU6502ComparisionInstructionTests {
         for registerOperand in UInt8.min...UInt8.max {
             for address in UInt16.min...UInt16(0x0123) {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x74)
-                let memoryOperand = s.cpu.load(indirectX: address)
+                let memoryOperand = s.cpu.load(preIndirectX: address)
                 let expectedStatus = expectedStatus(registerOperand, memoryOperand)
-                s.cpu.executeCMP(indirectX: address)
+                s.cpu.executeCMP(preIndirectX: address)
                 #expect(s.cpu == CPU6502(ac: registerOperand, xr: 0x74, sr: expectedStatus))
             }
         }
@@ -121,9 +121,9 @@ struct CPU6502ComparisionInstructionTests {
         for registerOperand in UInt8.min...UInt8.max {
             for address in UInt16.min...UInt16(0x0123) {
                 s.cpu = CPU6502(ac: registerOperand, yr: 0x74)
-                let memoryOperand = s.cpu.load(indirectY: address)
+                let memoryOperand = s.cpu.load(postIndirectY: address)
                 let expectedStatus = expectedStatus(registerOperand, memoryOperand)
-                s.cpu.executeCMP(indirectY: address)
+                s.cpu.executeCMP(postIndirectY: address)
                 #expect(s.cpu == CPU6502(ac: registerOperand, yr: 0x74, sr: expectedStatus))
             }
         }

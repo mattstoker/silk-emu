@@ -24,6 +24,8 @@ class System {
     }
 }
 
+let MemoryTestAddresses = stride(from: UInt16.min, to: UInt16.max, by: 123)
+
 @Suite("6502 CPU Base Tests")
 struct CPU6502Tests {
     @Test func initializer() {

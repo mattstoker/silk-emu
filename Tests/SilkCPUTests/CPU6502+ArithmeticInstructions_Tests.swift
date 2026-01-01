@@ -133,10 +133,10 @@ struct CPU6502ArithmeticInstructionTests {
             for address in UInt16.min...UInt16(0x0123) {
                 for carryOperand in [false, true] {
                     s.cpu = CPU6502(ac: registerOperand, xr: 0x63, sr: carryOperand ? CPU6502.srCMask : 0x00)
-                    let memoryOperand = s.cpu.load(indirectX: address)
+                    let memoryOperand = s.cpu.load(preIndirectX: address)
                     let expectedResult = UInt16(registerOperand) + UInt16(memoryOperand) + UInt16(carryOperand ? 1 : 0)
                     let expectedStatus = expectedStatus(registerOperand, memoryOperand, carryOperand, expectedResult)
-                    s.cpu.executeADC(indirectX: address)
+                    s.cpu.executeADC(preIndirectX: address)
                     #expect(s.cpu == CPU6502(ac: UInt8(expectedResult & 0xFF), xr: 0x63, sr: expectedStatus))
                 }
             }
@@ -149,10 +149,10 @@ struct CPU6502ArithmeticInstructionTests {
             for address in UInt16.min...UInt16(0x0123) {
                 for carryOperand in [false, true] {
                     s.cpu = CPU6502(ac: registerOperand, yr: 0x74, sr: carryOperand ? CPU6502.srCMask : 0x00)
-                    let memoryOperand = s.cpu.load(indirectY: address)
+                    let memoryOperand = s.cpu.load(postIndirectY: address)
                     let expectedResult = UInt16(registerOperand) + UInt16(memoryOperand) + UInt16(carryOperand ? 1 : 0)
                     let expectedStatus = expectedStatus(registerOperand, memoryOperand, carryOperand, expectedResult)
-                    s.cpu.executeADC(indirectY: address)
+                    s.cpu.executeADC(postIndirectY: address)
                     #expect(s.cpu == CPU6502(ac: UInt8(expectedResult & 0xFF), yr: 0x74, sr: expectedStatus))
                 }
             }
@@ -276,10 +276,10 @@ struct CPU6502ArithmeticInstructionTests {
             for address in UInt16.min...UInt16(0x0123) {
                 for borrowOperand in [false, true] {
                     s.cpu = CPU6502(ac: UInt8(bitPattern: registerOperand), xr: 0x63, sr: borrowOperand ? 0x00 : CPU6502.srCMask)
-                    let memoryOperand = Int8(bitPattern: s.cpu.load(indirectX: address))
+                    let memoryOperand = Int8(bitPattern: s.cpu.load(preIndirectX: address))
                     let expectedResult = Int16(registerOperand) - Int16(memoryOperand) - Int16(borrowOperand ? 1 : 0)
                     let expectedStatus = expectedStatus(registerOperand, memoryOperand, borrowOperand, expectedResult)
-                    s.cpu.executeSBC(indirectX: address)
+                    s.cpu.executeSBC(preIndirectX: address)
                     #expect(s.cpu == CPU6502(ac: UInt8(expectedResult & 0xFF), xr: 0x63, sr: expectedStatus))
                 }
             }
@@ -292,10 +292,10 @@ struct CPU6502ArithmeticInstructionTests {
             for address in UInt16.min...UInt16(0x0123) {
                 for borrowOperand in [false, true] {
                     s.cpu = CPU6502(ac: UInt8(bitPattern: registerOperand), yr: 0x74, sr: borrowOperand ? 0x00 : CPU6502.srCMask)
-                    let memoryOperand = Int8(bitPattern: s.cpu.load(indirectY: address))
+                    let memoryOperand = Int8(bitPattern: s.cpu.load(postIndirectY: address))
                     let expectedResult = Int16(registerOperand) - Int16(memoryOperand) - Int16(borrowOperand ? 1 : 0)
                     let expectedStatus = expectedStatus(registerOperand, memoryOperand, borrowOperand, expectedResult)
-                    s.cpu.executeSBC(indirectY: address)
+                    s.cpu.executeSBC(postIndirectY: address)
                     #expect(s.cpu == CPU6502(ac: UInt8(expectedResult & 0xFF), yr: 0x74, sr: expectedStatus))
                 }
             }

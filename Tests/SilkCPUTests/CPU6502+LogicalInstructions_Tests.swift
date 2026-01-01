@@ -109,10 +109,10 @@ struct CPU6502LogicalInstructionTests {
         for registerOperand in UInt8.min...UInt8.max {
             for address in UInt16.min...UInt16(0x0123) {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
-                let memoryOperand = s.cpu.load(indirectX: address)
+                let memoryOperand = s.cpu.load(preIndirectX: address)
                 let expectedResult = registerOperand & memoryOperand
                 let expectedStatus = expectedStatus(expectedResult)
-                s.cpu.executeAND(indirectX: address)
+                s.cpu.executeAND(preIndirectX: address)
                 #expect(s.cpu == CPU6502(ac: expectedResult, xr: 0x2A, sr: expectedStatus))
             }
         }
@@ -123,10 +123,10 @@ struct CPU6502LogicalInstructionTests {
         for registerOperand in UInt8.min...UInt8.max {
             for address in UInt16.min...UInt16(0x0123) {
                 s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
-                let memoryOperand = s.cpu.load(indirectY: address)
+                let memoryOperand = s.cpu.load(postIndirectY: address)
                 let expectedResult = registerOperand & memoryOperand
                 let expectedStatus = expectedStatus(expectedResult)
-                s.cpu.executeAND(indirectY: address)
+                s.cpu.executeAND(postIndirectY: address)
                 #expect(s.cpu == CPU6502(ac: expectedResult, yr: 0x2A, sr: expectedStatus))
             }
         }
@@ -234,10 +234,10 @@ struct CPU6502LogicalInstructionTests {
         for registerOperand in UInt8.min...UInt8.max {
             for address in UInt16.min...UInt16(0x0123) {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
-                let memoryOperand = s.cpu.load(indirectX: address)
+                let memoryOperand = s.cpu.load(preIndirectX: address)
                 let expectedResult = registerOperand | memoryOperand
                 let expectedStatus = expectedStatus(expectedResult)
-                s.cpu.executeORA(indirectX: address)
+                s.cpu.executeORA(preIndirectX: address)
                 #expect(s.cpu == CPU6502(ac: expectedResult, xr: 0x2A, sr: expectedStatus))
             }
         }
@@ -248,10 +248,10 @@ struct CPU6502LogicalInstructionTests {
         for registerOperand in UInt8.min...UInt8.max {
             for address in UInt16.min...UInt16(0x0123) {
                 s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
-                let memoryOperand = s.cpu.load(indirectY: address)
+                let memoryOperand = s.cpu.load(postIndirectY: address)
                 let expectedResult = registerOperand | memoryOperand
                 let expectedStatus = expectedStatus(expectedResult)
-                s.cpu.executeORA(indirectY: address)
+                s.cpu.executeORA(postIndirectY: address)
                 #expect(s.cpu == CPU6502(ac: expectedResult, yr: 0x2A, sr: expectedStatus))
             }
         }
@@ -359,10 +359,10 @@ struct CPU6502LogicalInstructionTests {
         for registerOperand in UInt8.min...UInt8.max {
             for address in UInt16.min...UInt16(0x0123) {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
-                let memoryOperand = s.cpu.load(indirectX: address)
+                let memoryOperand = s.cpu.load(preIndirectX: address)
                 let expectedResult = registerOperand ^ memoryOperand
                 let expectedStatus = expectedStatus(expectedResult)
-                s.cpu.executeEOR(indirectX: address)
+                s.cpu.executeEOR(preIndirectX: address)
                 #expect(s.cpu == CPU6502(ac: expectedResult, xr: 0x2A, sr: expectedStatus))
             }
         }
@@ -373,10 +373,10 @@ struct CPU6502LogicalInstructionTests {
         for registerOperand in UInt8.min...UInt8.max {
             for address in UInt16.min...UInt16(0x0123) {
                 s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
-                let memoryOperand = s.cpu.load(indirectY: address)
+                let memoryOperand = s.cpu.load(postIndirectY: address)
                 let expectedResult = registerOperand ^ memoryOperand
                 let expectedStatus = expectedStatus(expectedResult)
-                s.cpu.executeEOR(indirectY: address)
+                s.cpu.executeEOR(postIndirectY: address)
                 #expect(s.cpu == CPU6502(ac: expectedResult, yr: 0x2A, sr: expectedStatus))
             }
         }
