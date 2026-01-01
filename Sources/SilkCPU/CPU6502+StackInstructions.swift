@@ -17,8 +17,7 @@
 // implied       PHA          48     1        3
 extension CPU6502 {
     mutating func executePHA() {
-        store(stackpage: sp, ac)
-        sp = sp &- 1
+        push(ac)
     }
 }
 
@@ -35,8 +34,7 @@ extension CPU6502 {
 // implied       PHP          08     1        3
 extension CPU6502 {
     mutating func executePHP() {
-        store(stackpage: sp, sr | CPU6502.srBMask | CPU6502.srXMask)
-        sp = sp &- 1
+        push(sr | CPU6502.srBMask | CPU6502.srXMask)
     }
 }
 
@@ -50,8 +48,7 @@ extension CPU6502 {
 // stack/implied PHX          DA     1        3         *
 extension CPU6502 {
     mutating func executePHX() {
-        store(stackpage: sp, xr)
-        sp = sp &- 1
+        push(xr)
     }
 }
 
@@ -65,8 +62,7 @@ extension CPU6502 {
 // stack/implied PHY          5A     1        3         *
 extension CPU6502 {
     mutating func executePHY() {
-        store(stackpage: sp, yr)
-        sp = sp &- 1
+        push(yr)
     }
 }
 
@@ -80,8 +76,7 @@ extension CPU6502 {
 // implied       PLA          68     1        4
 extension CPU6502 {
     mutating func executePLA() {
-        ac = load(stackpage: sp)
-        sp = sp &+ 1
+        ac = pull()
     }
 }
 
@@ -98,8 +93,7 @@ extension CPU6502 {
 // implied       PLP          28     1        4
 extension CPU6502 {
     mutating func executePLP() {
-        sr = load(stackpage: sp)
-        sp = sp &+ 1
+        sr = pull()
     }
 }
 
@@ -113,8 +107,7 @@ extension CPU6502 {
 // implied       PLA          FA     1        4         *
 extension CPU6502 {
     mutating func executePLX() {
-        xr = load(stackpage: sp)
-        sp = sp &+ 1
+        xr = pull()
     }
 }
 
@@ -128,7 +121,6 @@ extension CPU6502 {
 // implied       PLA          7A     1        4         *
 extension CPU6502 {
     mutating func executePLY() {
-        yr = load(stackpage: sp)
-        sp = sp &+ 1
+        yr = pull()
     }
 }

@@ -37,10 +37,7 @@ struct CPU6502Tests {
                 xr: 0x00,
                 yr: 0x00,
                 sr: 0x00,
-                sp: 0x00,
-                res: false,
-                irq: false,
-                nmi: false
+                sp: 0x00
             )
         )
     }

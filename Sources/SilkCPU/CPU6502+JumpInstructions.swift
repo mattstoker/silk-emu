@@ -53,12 +53,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeJSR(absolute oper: UInt16) {
         let pcNext = pc &+ 2 // TODO: Should be 3?
-        let pcNextHigh = UInt8((pcNext & 0xFF00) >> 8)
-        let pcNextLow = UInt8(pcNext & 0x00FF) >> 8
-        store(stackpage: sp, pcNextHigh)
-        sp = sp &- 1
-        store(stackpage: sp, pcNextLow)
-        sp = sp &- 1
+        pushWide(pcNext)
         pc = address(absolute: oper)
     }
 }
@@ -73,11 +68,7 @@ extension CPU6502 {
 // implied       RTS          60     1        6
 extension CPU6502 {
     mutating func executeRTS() {
-        let pcNextHigh = load(stackpage: sp)
-        sp = sp &+ 1
-        let pcNextLow = load(stackpage: sp)
-        sp = sp &+ 1
-        let pcNext = UInt16(high: pcNextHigh, low: pcNextLow)
+        let pcNext = pullWide()
         pc = address(absolute: pcNext)
     }
 }

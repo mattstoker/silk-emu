@@ -17,9 +17,6 @@ struct CPU6502 {
     var yr: UInt8
     var sr: UInt8
     var sp: UInt8
-    var res: Bool
-    var irq: Bool
-    var nmi: Bool
     var load: (UInt16) -> UInt8 = { address in return 0xEA }
     var store: (UInt16, UInt8) -> () = { address, value in return }
 }
@@ -32,10 +29,7 @@ extension CPU6502: Equatable {
             lhs.xr == rhs.xr &&
             lhs.yr == rhs.yr &&
             lhs.sr == rhs.sr &&
-            lhs.sp == rhs.sp &&
-            lhs.res == rhs.res &&
-            lhs.irq == rhs.irq &&
-            lhs.nmi == rhs.nmi
+            lhs.sp == rhs.sp
     }
 }
 
@@ -47,9 +41,6 @@ extension CPU6502: Hashable {
         hasher.combine(yr)
         hasher.combine(sr)
         hasher.combine(sp)
-        hasher.combine(res)
-        hasher.combine(irq)
-        hasher.combine(nmi)
     }
 }
 
@@ -60,10 +51,7 @@ extension CPU6502 {
         xr: UInt8 = 0x00,
         yr: UInt8 = 0x00,
         sr: UInt8 = 0x00,
-        sp: UInt8 = 0x00,
-        res: Bool = false,
-        irq: Bool = false
-        // nmi: Bool = false
+        sp: UInt8 = 0x00
     ) {
         self.pc = pc
         self.ac = ac
@@ -71,9 +59,6 @@ extension CPU6502 {
         self.yr = yr
         self.sr = sr
         self.sp = sp
-        self.res = res
-        self.irq = irq
-        self.nmi = false //nmi
     }
 }
 
@@ -400,6 +385,33 @@ extension CPU6502 {
     func store(relative oper: UInt8, _ value: UInt8) {
         let address = address(relative: oper)
         store(address, value)
+    }
+}
+
+// MARK: Push & Pull
+
+extension CPU6502 {
+    mutating func push(_ oper: UInt8) {
+        store(stackpage: sp, oper)
+        sp = sp &- 1
+    }
+    
+    mutating func pushWide(_ oper: UInt16) {
+        push(UInt8((oper & 0xFF00) >> 8))
+        push(UInt8(oper & 0x00FF))
+    }
+    
+    mutating func pull() -> UInt8 {
+        let value = load(stackpage: sp)
+        sp = sp &+ 1
+        return value
+    }
+    
+    mutating func pullWide() -> UInt16 {
+        let high = pull()
+        let low = pull()
+        let value = UInt16(high: high, low: low)
+        return value
     }
 }
 
