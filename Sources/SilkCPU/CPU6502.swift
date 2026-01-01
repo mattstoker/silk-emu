@@ -4,6 +4,9 @@
 //
 //  Created by Matt Stoker on 12/24/25.
 //
+//  Documentation largely based on the work found at:
+//  https://www.masswerk.at/6502/6502_instruction_set.html
+//
 
 // MARK: CPU State & Equality
 
@@ -261,6 +264,12 @@ extension CPU6502 {
         return value
     }
     
+    func load(relative oper: UInt8) -> UInt8 {
+        let address = pc &+ UInt16(oper)
+        let value = load(address)
+        return value
+    }
+    
     func store(zeropage oper: UInt8, _ value: UInt8) {
         let address = UInt16(high: CPU6502.zeropage, low: oper)
         store(address, value)
@@ -318,6 +327,19 @@ extension CPU6502 {
     func store(stackpage oper: UInt8, _ value: UInt8) {
         let address = UInt16(high: CPU6502.stackpage, low: oper)
         store(address, value)
+    }
+    
+    func store(relative oper: UInt8, _ value: UInt8) {
+        let address = pc &+ UInt16(oper)
+        store(address, value)
+    }
+}
+
+// MARK: Branch & Jump
+
+extension CPU6502 {
+    static func address(relative oper: UInt16, _ value: UInt8) -> UInt16 {
+        return UInt16(truncatingIfNeeded: Int32(oper) &+ Int32(Int8(bitPattern: value)))
     }
 }
 
