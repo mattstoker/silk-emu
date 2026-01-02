@@ -35,7 +35,7 @@ extension CPU6502 {
 // addressing    assembler    opc    bytes    cycles    W65C02-only
 // (absolute,X)  JMP (oper,X) 7C     3        6         *
 extension CPU6502 {
-    mutating func executeJMP(absoluteX oper: UInt16) {
+    mutating func executeJMP(absoluteXIndirect oper: UInt16) {
         pc = address(absoluteX: oper)
     }
 }

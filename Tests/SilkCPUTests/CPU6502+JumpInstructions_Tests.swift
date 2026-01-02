@@ -42,7 +42,7 @@ struct CPU6502JumpInstructionTests {
             for immediateOperand in MemoryTestAddresses {
                 s.cpu = CPU6502(pc: counterOperand, xr: 0x9B)
                 let expectedCounter = s.cpu.address(absoluteX: immediateOperand)
-                s.cpu.executeJMP(absoluteX: immediateOperand)
+                s.cpu.executeJMP(absoluteXIndirect: immediateOperand)
                 #expect(s.cpu == CPU6502(pc: expectedCounter, xr: 0x9B))
             }
         }
