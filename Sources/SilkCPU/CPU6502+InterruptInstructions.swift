@@ -27,7 +27,7 @@
 //  implied       BRK          00     1        7
 extension CPU6502 {
     mutating func executeBRK() {
-        let pcNext = pc &+ 2 // TODO: Should be 1?
+        let pcNext = pc &+ 2
         pushWide(pcNext)
         push(sr | CPU6502.srBMask)
     }
@@ -67,7 +67,7 @@ extension CPU6502 {
 // implied       WAI          CB     1        3         *
 extension CPU6502 {
     mutating func executeWAI() {
-        // TODO: Wait state
+        state = .wait
     }
 }
 
@@ -84,6 +84,6 @@ extension CPU6502 {
 // implied       STP          DB     1        3         *
 extension CPU6502 {
     mutating func executeSTP() {
-        // TODO: Stop state
+        state = .stop
     }
 }

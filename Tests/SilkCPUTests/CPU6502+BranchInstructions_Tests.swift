@@ -19,7 +19,7 @@ struct CPU6502BranchInstructionTests {
                 s.cpu = CPU6502(pc: counterOperand)
                 let expectedCounter = !condition(s) ?
                     counterOperand :
-                    UInt16(truncatingIfNeeded: Int32(counterOperand &+ 2) &+ Int32(Int8(bitPattern: relativeOperand)))
+                    UInt16(truncatingIfNeeded: Int32(counterOperand) &+ Int32(Int8(bitPattern: relativeOperand)))
                 execution(s, relativeOperand)
                 #expect(s.cpu == CPU6502(pc: expectedCounter))
             }
@@ -66,7 +66,7 @@ struct CPU6502BranchInstructionTests {
                 s.cpu = CPU6502(pc: counterOperand, ac: registerOperand)
                 let expectedCounter = !condition(s) ?
                     counterOperand :
-                    UInt16(truncatingIfNeeded: Int32(counterOperand &+ 2) &+ Int32(Int8(bitPattern: relativeOperand)))
+                    UInt16(truncatingIfNeeded: Int32(counterOperand) &+ Int32(Int8(bitPattern: relativeOperand)))
                 execution(s, relativeOperand)
                 #expect(s.cpu == CPU6502(pc: expectedCounter, ac: registerOperand))
             }

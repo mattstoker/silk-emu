@@ -10,38 +10,23 @@
 
 // MARK: CPU State & Equality
 
-struct CPU6502 {
+public struct CPU6502 {
+    enum State {
+        case boot
+        case run
+        case wait
+        case stop
+    }
+    
     var pc: UInt16
     var ac: UInt8
     var xr: UInt8
     var yr: UInt8
     var sr: UInt8
     var sp: UInt8
+    var state: State
     var load: (UInt16) -> UInt8 = { address in return 0xEA }
     var store: (UInt16, UInt8) -> () = { address, value in return }
-}
-
-extension CPU6502: Equatable {
-    static func == (lhs: CPU6502, rhs: CPU6502) -> Bool {
-        return
-            lhs.pc == rhs.pc &&
-            lhs.ac == rhs.ac &&
-            lhs.xr == rhs.xr &&
-            lhs.yr == rhs.yr &&
-            lhs.sr == rhs.sr &&
-            lhs.sp == rhs.sp
-    }
-}
-
-extension CPU6502: Hashable {
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(pc)
-        hasher.combine(ac)
-        hasher.combine(xr)
-        hasher.combine(yr)
-        hasher.combine(sr)
-        hasher.combine(sp)
-    }
 }
 
 extension CPU6502 {
@@ -59,6 +44,48 @@ extension CPU6502 {
         self.yr = yr
         self.sr = sr
         self.sp = sp
+        self.state = .boot
+    }
+    
+    public init(load: @escaping (UInt16) -> UInt8, store: @escaping (UInt16, UInt8) -> ()) {
+        self.init()
+        self.load = load
+        self.store = store
+    }
+}
+
+extension CPU6502: Equatable {
+    public static func == (lhs: CPU6502, rhs: CPU6502) -> Bool {
+        return
+            lhs.pc == rhs.pc &&
+            lhs.ac == rhs.ac &&
+            lhs.xr == rhs.xr &&
+            lhs.yr == rhs.yr &&
+            lhs.sr == rhs.sr &&
+            lhs.sp == rhs.sp
+    }
+}
+
+extension CPU6502: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(pc)
+        hasher.combine(ac)
+        hasher.combine(xr)
+        hasher.combine(yr)
+        hasher.combine(sr)
+        hasher.combine(sp)
+    }
+}
+
+// MARK: Description
+
+extension CPU6502: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        let opcode = load(absolute: pc)
+        let instruction = Instruction(rawValue: opcode)!
+        let operLow = load(absolute: pc &+ 1)
+        let operHigh = load(absolute: pc &+ 2)
+        return "PC: 0x\(String(pc, radix: 16)) \(instruction)(\(String(opcode, radix: 16))) 0x\(String(operLow, radix: 16)) 0x\(String(operHigh, radix: 16))   AC: 0x\(String(ac, radix: 16)) XR: 0x\(String(xr, radix: 16)) YR: 0x\(String(yr, radix: 16)) SR: 0x\(String(sr, radix: 16)) SP: 0x\(String(sp, radix: 16))"
     }
 }
 
@@ -244,8 +271,8 @@ extension CPU6502 {
         return address
     }
     
-    func address(relative oper: UInt8, zeroOffset: Int8 = 0) -> UInt16 {
-        let address = UInt16(truncatingIfNeeded: Int32(pc) &+ Int32(zeroOffset) &+ Int32(Int8(bitPattern: oper)))
+    func address(relative oper: UInt8) -> UInt16 {
+        let address = UInt16(truncatingIfNeeded: Int32(pc) &+ Int32(Int8(bitPattern: oper)))
         return address
     }
 }
@@ -397,13 +424,13 @@ extension CPU6502 {
     }
     
     mutating func pushWide(_ oper: UInt16) {
-        push(UInt8((oper & 0xFF00) >> 8))
         push(UInt8(oper & 0x00FF))
+        push(UInt8((oper & 0xFF00) >> 8))
     }
     
     mutating func pull() -> UInt8 {
-        let value = load(stackpage: sp)
         sp = sp &+ 1
+        let value = load(stackpage: sp)
         return value
     }
     
@@ -921,271 +948,288 @@ extension CPU6502 {
 }
 
 extension CPU6502 {
-    func loadOper() -> UInt8 { load(absolute: pc &+ 1) }
-    func loadOperWide() -> UInt16 { UInt16(high: load(absolute: pc &+ 2), low: load(absolute: pc &+ 1)) }
-    
-    mutating func execute() {
+    public mutating func execute() {
+        switch state {
+        case .boot:
+            let initializationVectorLow = load(absolute: 0xFFFC)
+            let initializationVectorHigh = load(absolute: 0xFFFD)
+            let initializationVector = UInt16(high: initializationVectorHigh, low: initializationVectorLow)
+            state = .run
+            executeJMP(absolute: initializationVector)
+            return
+        case .stop:
+            return
+        case .wait:
+            return
+        case .run:
+            ()
+        }
+        
         let opcode = load(absolute: pc)
+        let size = CPU6502.instructionSize(opcode)
+        let oper: UInt8 = size <= 1 ? 0xAA : load(absolute: pc &+ 1)
+        let operWideHigh = size <= 2 ? 0xBB : load(absolute: pc &+ 2)
+        let operWide = UInt16(high: operWideHigh, low: oper)
+        pc = pc &+ UInt16(size)
         let instruction = Instruction(rawValue: opcode)!
         switch instruction {
         case .BRK_impl: executeBRK()
-        case .ORA_XInd: executeORA(preIndirectX: loadOperWide())
+        case .ORA_XInd: executeORA(preIndirectX: operWide)
         case .NOP02: executeNOP()
         case .NOP03: executeNOP()
-        case .TSB_zpg: executeTSB(zeropage: loadOper())
-        case .ORA_zpg: executeORA(zeropage: loadOper())
-        case .ASL_zpg: executeASL(zeropage: loadOper())
-        case .RMB0_zpg: executeRMB0(zeropage: loadOper())
+        case .TSB_zpg: executeTSB(zeropage: oper)
+        case .ORA_zpg: executeORA(zeropage: oper)
+        case .ASL_zpg: executeASL(zeropage: oper)
+        case .RMB0_zpg: executeRMB0(zeropage: oper)
         case .PHP_impl: executePHP()
-        case .ORA_imm: executeORA(immediate: loadOper())
+        case .ORA_imm: executeORA(immediate: oper)
         case .ASL_AC: executeASL()
         case .NOP0B: executeNOP()
-        case .TSB_abs: executeTSB(absolute: loadOperWide())
-        case .ORA_abs: executeORA(absolute: loadOperWide())
-        case .ASL_abs: executeASL(absolute: loadOperWide())
-        case .BBR0_rel: executeBBR0(relative: loadOper())
-        case .BPL_rel: executeBPL(relative: loadOper())
-        case .ORA_indY: executeORA(postIndirectY: loadOperWide())
-        case .ORA_zpgi: executeORA(zeropageIndirect: loadOper())
+        case .TSB_abs: executeTSB(absolute: operWide)
+        case .ORA_abs: executeORA(absolute: operWide)
+        case .ASL_abs: executeASL(absolute: operWide)
+        case .BBR0_rel: executeBBR0(relative: oper)
+        case .BPL_rel: executeBPL(relative: oper)
+        case .ORA_indY: executeORA(postIndirectY: operWide)
+        case .ORA_zpgi: executeORA(zeropageIndirect: oper)
         case .NOP13: executeNOP()
-        case .TRB_zpg: executeTRB(zeropage: loadOper())
-        case .ORA_zpgX: executeORA(zeropageX: loadOper())
-        case .ASL_zpgX: executeASL(zeropageX: loadOper())
-        case .RMB1_zpg: executeRMB1(zeropage: loadOper())
+        case .TRB_zpg: executeTRB(zeropage: oper)
+        case .ORA_zpgX: executeORA(zeropageX: oper)
+        case .ASL_zpgX: executeASL(zeropageX: oper)
+        case .RMB1_zpg: executeRMB1(zeropage: oper)
         case .CLC_impl: executeCLC()
-        case .ORA_absY: executeORA(absoluteY: loadOperWide())
+        case .ORA_absY: executeORA(absoluteY: operWide)
         case .INC_AC: executeINC()
         case .NOP1B: executeNOP()
-        case .TRB_abs: executeTRB(absolute: loadOperWide())
-        case .ORA_absX: executeORA(absoluteX: loadOperWide())
-        case .ASL_absX: executeASL(absoluteX: loadOperWide())
-        case .BBR1_rel: executeBBR1(relative: loadOper())
-        case .JSR_abs: executeJSR(absolute: loadOperWide())
-        case .AND_XInd: executeAND(preIndirectX: loadOperWide())
+        case .TRB_abs: executeTRB(absolute: operWide)
+        case .ORA_absX: executeORA(absoluteX: operWide)
+        case .ASL_absX: executeASL(absoluteX: operWide)
+        case .BBR1_rel: executeBBR1(relative: oper)
+        case .JSR_abs: executeJSR(absolute: operWide)
+        case .AND_XInd: executeAND(preIndirectX: operWide)
         case .NOP22: executeNOP()
         case .NOP23: executeNOP()
-        case .BIT_zpg: executeBIT(zeropage: loadOper())
-        case .AND_zpg: executeAND(zeropage: loadOper())
-        case .ROL_zpg: executeROL(zeropage: loadOper())
-        case .RMB2_zpg: executeRMB2(zeropage: loadOper())
+        case .BIT_zpg: executeBIT(zeropage: oper)
+        case .AND_zpg: executeAND(zeropage: oper)
+        case .ROL_zpg: executeROL(zeropage: oper)
+        case .RMB2_zpg: executeRMB2(zeropage: oper)
         case .PLP_impl: executePLP()
-        case .AND_imm: executeAND(immediate: loadOper())
+        case .AND_imm: executeAND(immediate: oper)
         case .ROL_AC: executeROL()
         case .NOP2B: executeNOP()
-        case .BIT_abs: executeBIT(absolute: loadOperWide())
-        case .AND_abs: executeAND(absolute: loadOperWide())
-        case .ROL_abs: executeROL(absolute: loadOperWide())
-        case .BBR2_rel: executeBBR2(relative: loadOper())
-        case .BMI_rel: executeBMI(relative: loadOper())
-        case .AND_indY: executeAND(postIndirectY: loadOperWide())
-        case .AND_zpgi: executeAND(zeropageIndirect: loadOper())
+        case .BIT_abs: executeBIT(absolute: operWide)
+        case .AND_abs: executeAND(absolute: operWide)
+        case .ROL_abs: executeROL(absolute: operWide)
+        case .BBR2_rel: executeBBR2(relative: oper)
+        case .BMI_rel: executeBMI(relative: oper)
+        case .AND_indY: executeAND(postIndirectY: operWide)
+        case .AND_zpgi: executeAND(zeropageIndirect: oper)
         case .NOP33: executeNOP()
-        case .BIT_zpgX: executeBIT(zeropageX: loadOper())
-        case .AND_zpgX: executeAND(zeropageX: loadOper())
-        case .ROL_zpgX: executeROL(zeropageX: loadOper())
-        case .RMB3_zpg: executeRMB3(zeropage: loadOper())
+        case .BIT_zpgX: executeBIT(zeropageX: oper)
+        case .AND_zpgX: executeAND(zeropageX: oper)
+        case .ROL_zpgX: executeROL(zeropageX: oper)
+        case .RMB3_zpg: executeRMB3(zeropage: oper)
         case .SEC_impl: executeSEC()
-        case .AND_absY: executeAND(absoluteY: loadOperWide())
+        case .AND_absY: executeAND(absoluteY: operWide)
         case .DEC_AC: executeDEC()
         case .NOP3B: executeNOP()
-        case .BIT_absX: executeBIT(absoluteX: loadOperWide())
-        case .AND_absX: executeAND(absoluteX: loadOperWide())
-        case .ROL_absX: executeROL(absoluteX: loadOperWide())
-        case .BBR3_rel: executeBBR3(relative: loadOper())
+        case .BIT_absX: executeBIT(absoluteX: operWide)
+        case .AND_absX: executeAND(absoluteX: operWide)
+        case .ROL_absX: executeROL(absoluteX: operWide)
+        case .BBR3_rel: executeBBR3(relative: oper)
         case .RTI_impl: executeRTI()
-        case .EOR_XInd: executeEOR(preIndirectX: loadOperWide())
+        case .EOR_XInd: executeEOR(preIndirectX: operWide)
         case .NOP42: executeNOP()
         case .NOP43: executeNOP()
         case .NOP44: executeNOP()
-        case .EOR_zpg: executeEOR(zeropage: loadOper())
-        case .LSR_zpg: executeLSR(zeropage: loadOper())
-        case .RMB4_zpg: executeRMB4(zeropage: loadOper())
+        case .EOR_zpg: executeEOR(zeropage: oper)
+        case .LSR_zpg: executeLSR(zeropage: oper)
+        case .RMB4_zpg: executeRMB4(zeropage: oper)
         case .PHA_impl: executePHA()
-        case .EOR_imm: executeEOR(immediate: loadOper())
+        case .EOR_imm: executeEOR(immediate: oper)
         case .LSR_AC: executeLSR()
         case .NOP4B: executeNOP()
-        case .JMP_abs: executeJMP(absolute: loadOperWide())
-        case .EOR_abs: executeEOR(absolute: loadOperWide())
-        case .LSR_abs: executeLSR(absolute: loadOperWide())
-        case .BBR4_rel: executeBBR4(relative: loadOper())
-        case .BVC_rel: executeBVC(relative: loadOper())
-        case .EOR_indY: executeEOR(postIndirectY: loadOperWide())
-        case .EOR_zpgi: executeEOR(zeropageIndirect: loadOper())
+        case .JMP_abs: executeJMP(absolute: operWide)
+        case .EOR_abs: executeEOR(absolute: operWide)
+        case .LSR_abs: executeLSR(absolute: operWide)
+        case .BBR4_rel: executeBBR4(relative: oper)
+        case .BVC_rel: executeBVC(relative: oper)
+        case .EOR_indY: executeEOR(postIndirectY: operWide)
+        case .EOR_zpgi: executeEOR(zeropageIndirect: oper)
         case .NOP53: executeNOP()
         case .NOP54: executeNOP()
-        case .EOR_zpgX: executeEOR(zeropageX: loadOper())
-        case .LSR_zpgX: executeLSR(zeropageX: loadOper())
-        case .RMB5_zpg: executeRMB5(zeropage: loadOper())
+        case .EOR_zpgX: executeEOR(zeropageX: oper)
+        case .LSR_zpgX: executeLSR(zeropageX: oper)
+        case .RMB5_zpg: executeRMB5(zeropage: oper)
         case .CLI_impl: executeCLI()
-        case .EOR_absY: executeEOR(absoluteY: loadOperWide())
+        case .EOR_absY: executeEOR(absoluteY: operWide)
         case .PHY_impl: executePHY()
         case .NOP5B: executeNOP()
         case .NOP5C: executeNOP()
-        case .EOR_absX: executeEOR(absoluteX: loadOperWide())
-        case .LSR_absX: executeLSR(absoluteX: loadOperWide())
-        case .BBR5_rel: executeBBR5(relative: loadOper())
+        case .EOR_absX: executeEOR(absoluteX: operWide)
+        case .LSR_absX: executeLSR(absoluteX: operWide)
+        case .BBR5_rel: executeBBR5(relative: oper)
         case .RTS_impl: executeRTS()
-        case .ADC_XInd: executeADC(preIndirectX: loadOperWide())
+        case .ADC_XInd: executeADC(preIndirectX: operWide)
         case .NOP62: executeNOP()
         case .NOP63: executeNOP()
-        case .STZ_zpg: executeSTZ(zeropage: loadOper())
-        case .ADC_zpg: executeADC(zeropage: loadOper())
-        case .ROR_zpg: executeROR(zeropage: loadOper())
-        case .RMB6_zpg: executeRMB6(zeropage: loadOper())
+        case .STZ_zpg: executeSTZ(zeropage: oper)
+        case .ADC_zpg: executeADC(zeropage: oper)
+        case .ROR_zpg: executeROR(zeropage: oper)
+        case .RMB6_zpg: executeRMB6(zeropage: oper)
         case .PLA_impl: executePLA()
-        case .ADC_imm: executeADC(immediate: loadOper())
+        case .ADC_imm: executeADC(immediate: oper)
         case .ROR_AC: executeROR()
         case .NOP6B: executeNOP()
-        case .JMP_ind: executeJMP(indirect: loadOperWide())
-        case .ADC_abs: executeADC(absolute: loadOperWide())
-        case .ROR_abs: executeROR(absolute: loadOperWide())
-        case .BBR6_rel: executeBBR6(relative: loadOper())
-        case .BVS_rel: executeBVS(relative: loadOper())
-        case .ADC_indY: executeADC(postIndirectY: loadOperWide())
-        case .ADC_zpgi: executeADC(zeropageIndirect: loadOper())
+        case .JMP_ind: executeJMP(indirect: operWide)
+        case .ADC_abs: executeADC(absolute: operWide)
+        case .ROR_abs: executeROR(absolute: operWide)
+        case .BBR6_rel: executeBBR6(relative: oper)
+        case .BVS_rel: executeBVS(relative: oper)
+        case .ADC_indY: executeADC(postIndirectY: operWide)
+        case .ADC_zpgi: executeADC(zeropageIndirect: oper)
         case .NOP73: executeNOP()
-        case .STZ_zpgX: executeSTZ(zeropageX: loadOper())
-        case .ADC_zpgX: executeADC(zeropageX: loadOper())
-        case .ROR_zpgX: executeROR(zeropageX: loadOper())
-        case .RMB7_zpg: executeRMB7(zeropage: loadOper())
+        case .STZ_zpgX: executeSTZ(zeropageX: oper)
+        case .ADC_zpgX: executeADC(zeropageX: oper)
+        case .ROR_zpgX: executeROR(zeropageX: oper)
+        case .RMB7_zpg: executeRMB7(zeropage: oper)
         case .SEI_impl: executeSEI()
-        case .ADC_absY: executeADC(absoluteY: loadOperWide())
+        case .ADC_absY: executeADC(absoluteY: operWide)
         case .PLY_impl: executePLY()
         case .NOP7B: executeNOP()
-        case .JMP_absXInd: executeJMP(absoluteXIndirect: loadOperWide())
-        case .ADC_absX: executeADC(absoluteX: loadOperWide())
-        case .ROR_absX: executeROR(absoluteX: loadOperWide())
-        case .BBR7_rel: executeBBR7(relative: loadOper())
-        case .BRA_rel: executeBRA(relative: loadOper())
-        case .STA_XInd: executeSTA(preIndirectX: loadOperWide())
+        case .JMP_absXInd: executeJMP(absoluteXIndirect: operWide)
+        case .ADC_absX: executeADC(absoluteX: operWide)
+        case .ROR_absX: executeROR(absoluteX: operWide)
+        case .BBR7_rel: executeBBR7(relative: oper)
+        case .BRA_rel: executeBRA(relative: oper)
+        case .STA_XInd: executeSTA(preIndirectX: operWide)
         case .NOP82: executeNOP()
         case .NOP83: executeNOP()
-        case .STY_zpg: executeSTY(zeropage: loadOper())
-        case .STA_zpg: executeSTA(zeropage: loadOper())
-        case .STX_zpg: executeSTX(zeropage: loadOper())
-        case .SMB0_zpg: executeSMB0(zeropage: loadOper())
+        case .STY_zpg: executeSTY(zeropage: oper)
+        case .STA_zpg: executeSTA(zeropage: oper)
+        case .STX_zpg: executeSTX(zeropage: oper)
+        case .SMB0_zpg: executeSMB0(zeropage: oper)
         case .DEY_impl: executeDEY()
-        case .BIT_imm: executeBIT(immediate: loadOper())
+        case .BIT_imm: executeBIT(immediate: oper)
         case .TXA_impl: executeTXA()
         case .NOP8B: executeNOP()
-        case .STY_abs: executeSTY(absolute: loadOperWide())
-        case .STA_abs: executeSTA(absolute: loadOperWide())
-        case .STX_abs: executeSTX(absolute: loadOperWide())
-        case .BBS0_rel: executeBBS0(relative: loadOper())
-        case .BCC_rel: executeBCC(relative: loadOper())
-        case .STA_indY: executeSTA(postIndirectY: loadOperWide())
-        case .STA_zpgi: executeSTA(zeropageIndirect: loadOper())
+        case .STY_abs: executeSTY(absolute: operWide)
+        case .STA_abs: executeSTA(absolute: operWide)
+        case .STX_abs: executeSTX(absolute: operWide)
+        case .BBS0_rel: executeBBS0(relative: oper)
+        case .BCC_rel: executeBCC(relative: oper)
+        case .STA_indY: executeSTA(postIndirectY: operWide)
+        case .STA_zpgi: executeSTA(zeropageIndirect: oper)
         case .NOP93: executeNOP()
-        case .STY_zpgX: executeSTY(zeropageX: loadOper())
-        case .STA_zpgX: executeSTA(zeropageX: loadOper())
-        case .STX_zpgY: executeSTX(zeropageY: loadOper())
-        case .SMB1_zpg: executeSMB1(zeropage: loadOper())
+        case .STY_zpgX: executeSTY(zeropageX: oper)
+        case .STA_zpgX: executeSTA(zeropageX: oper)
+        case .STX_zpgY: executeSTX(zeropageY: oper)
+        case .SMB1_zpg: executeSMB1(zeropage: oper)
         case .TYA_impl: executeTYA()
-        case .STA_absY: executeSTA(absoluteY: loadOperWide())
+        case .STA_absY: executeSTA(absoluteY: operWide)
         case .TXS_impl: executeTXS()
         case .NOP9B: executeNOP()
-        case .STZ_abs: executeSTZ(absolute: loadOperWide())
-        case .STA_absX: executeSTA(absoluteX: loadOperWide())
-        case .STZ_absX: executeSTZ(absoluteX: loadOperWide())
-        case .BBS1_rel: executeBBS1(relative: loadOper())
-        case .LDY_imm: executeLDY(immediate: loadOper())
-        case .LDA_XInd: executeLDA(preIndirectX: loadOperWide())
-        case .LDX_imm: executeLDX(immediate: loadOper())
+        case .STZ_abs: executeSTZ(absolute: operWide)
+        case .STA_absX: executeSTA(absoluteX: operWide)
+        case .STZ_absX: executeSTZ(absoluteX: operWide)
+        case .BBS1_rel: executeBBS1(relative: oper)
+        case .LDY_imm: executeLDY(immediate: oper)
+        case .LDA_XInd: executeLDA(preIndirectX: operWide)
+        case .LDX_imm: executeLDX(immediate: oper)
         case .NOPA3: executeNOP()
-        case .LDY_zpg: executeLDY(zeropage: loadOper())
-        case .LDA_zpg: executeLDA(zeropage: loadOper())
-        case .LDX_zpg: executeLDX(zeropage: loadOper())
-        case .SMB2_zpg: executeSMB2(zeropage: loadOper())
+        case .LDY_zpg: executeLDY(zeropage: oper)
+        case .LDA_zpg: executeLDA(zeropage: oper)
+        case .LDX_zpg: executeLDX(zeropage: oper)
+        case .SMB2_zpg: executeSMB2(zeropage: oper)
         case .TAY_impl: executeTAY()
-        case .LDA_imm: executeLDA(immediate: loadOper())
+        case .LDA_imm: executeLDA(immediate: oper)
         case .TAX_impl: executeTAX()
         case .NOPAB: executeNOP()
-        case .LDY_abs: executeLDY(absolute: loadOperWide())
-        case .LDA_abs: executeLDA(absolute: loadOperWide())
-        case .LDX_abs: executeLDX(absolute: loadOperWide())
-        case .BBS2_rel: executeBBS2(relative: loadOper())
-        case .BCS_rel: executeBCS(relative: loadOper())
-        case .LDA_indY: executeLDA(postIndirectY: loadOperWide())
-        case .LDA_zpgi: executeLDA(zeropageIndirect: loadOper())
+        case .LDY_abs: executeLDY(absolute: operWide)
+        case .LDA_abs: executeLDA(absolute: operWide)
+        case .LDX_abs: executeLDX(absolute: operWide)
+        case .BBS2_rel: executeBBS2(relative: oper)
+        case .BCS_rel: executeBCS(relative: oper)
+        case .LDA_indY: executeLDA(postIndirectY: operWide)
+        case .LDA_zpgi: executeLDA(zeropageIndirect: oper)
         case .NOPB3: executeNOP()
-        case .LDY_zpgX: executeLDY(zeropageX: loadOper())
-        case .LDA_zpgX: executeLDA(zeropageX: loadOper())
-        case .LDX_zpgY: executeLDX(zeropageY: loadOper())
-        case .SMB3_zpg: executeSMB3(zeropage: loadOper())
+        case .LDY_zpgX: executeLDY(zeropageX: oper)
+        case .LDA_zpgX: executeLDA(zeropageX: oper)
+        case .LDX_zpgY: executeLDX(zeropageY: oper)
+        case .SMB3_zpg: executeSMB3(zeropage: oper)
         case .CLV_impl: executeCLV()
-        case .LDA_absY: executeLDA(absoluteY: loadOperWide())
+        case .LDA_absY: executeLDA(absoluteY: operWide)
         case .TSX_impl: executeTSX()
         case .NOPBB: executeNOP()
-        case .LDY_absX: executeLDY(absoluteX: loadOperWide())
-        case .LDA_absX: executeLDA(absoluteX: loadOperWide())
-        case .LDX_absY: executeLDX(absoluteY: loadOperWide())
-        case .BBS3_rel: executeBBS3(relative: loadOper())
-        case .CPY_imm: executeCPY(immediate: loadOper())
-        case .CMP_XInd: executeCMP(preIndirectX: loadOperWide())
+        case .LDY_absX: executeLDY(absoluteX: operWide)
+        case .LDA_absX: executeLDA(absoluteX: operWide)
+        case .LDX_absY: executeLDX(absoluteY: operWide)
+        case .BBS3_rel: executeBBS3(relative: oper)
+        case .CPY_imm: executeCPY(immediate: oper)
+        case .CMP_XInd: executeCMP(preIndirectX: operWide)
         case .NOPC2: executeNOP()
         case .NOPC3: executeNOP()
-        case .CPY_zpg: executeCPY(zeropage: loadOper())
-        case .CMP_zpg: executeCMP(zeropage: loadOper())
-        case .DEC_zpg: executeDEC(zeropage: loadOper())
-        case .SMB4_zpg: executeSMB4(zeropage: loadOper())
+        case .CPY_zpg: executeCPY(zeropage: oper)
+        case .CMP_zpg: executeCMP(zeropage: oper)
+        case .DEC_zpg: executeDEC(zeropage: oper)
+        case .SMB4_zpg: executeSMB4(zeropage: oper)
         case .INY_impl: executeINY()
-        case .CMP_imm: executeCMP(immediate: loadOper())
+        case .CMP_imm: executeCMP(immediate: oper)
         case .DEX_impl: executeDEX()
         case .WAI_impl: executeWAI()
-        case .CPY_abs: executeCPY(absolute: loadOperWide())
-        case .CMP_abs: executeCMP(absolute: loadOperWide())
-        case .DEC_abs: executeDEC(absolute: loadOperWide())
-        case .BBS4_rel: executeBBS4(relative: loadOper())
-        case .BNE_rel: executeBNE(relative: loadOper())
-        case .CMP_indY: executeCMP(postIndirectY: loadOperWide())
-        case .CMP_zpgi: executeCMP(zeropageIndirect: loadOper())
+        case .CPY_abs: executeCPY(absolute: operWide)
+        case .CMP_abs: executeCMP(absolute: operWide)
+        case .DEC_abs: executeDEC(absolute: operWide)
+        case .BBS4_rel: executeBBS4(relative: oper)
+        case .BNE_rel: executeBNE(relative: oper)
+        case .CMP_indY: executeCMP(postIndirectY: operWide)
+        case .CMP_zpgi: executeCMP(zeropageIndirect: oper)
         case .NOPD3: executeNOP()
         case .NOPD4: executeNOP()
-        case .CMP_zpgX: executeCMP(zeropageX: loadOper())
-        case .DEC_zpgX: executeDEC(zeropageX: loadOper())
-        case .SMB5_zpg: executeSMB5(zeropage: loadOper())
+        case .CMP_zpgX: executeCMP(zeropageX: oper)
+        case .DEC_zpgX: executeDEC(zeropageX: oper)
+        case .SMB5_zpg: executeSMB5(zeropage: oper)
         case .CLD_impl: executeCLD()
-        case .CMP_absY: executeCMP(absoluteY: loadOperWide())
+        case .CMP_absY: executeCMP(absoluteY: operWide)
         case .PHX_impl: executePHX()
         case .STP_impl: executeSTP()
         case .NOPDC: executeNOP()
-        case .CMP_absX: executeCMP(absoluteX: loadOperWide())
-        case .DEC_absX: executeDEC(absoluteX: loadOperWide())
-        case .BBS5_rel: executeBBS5(relative: loadOper())
-        case .CPX_imm: executeCPX(immediate: loadOper())
-        case .SBC_XInd: executeSBC(preIndirectX: loadOperWide())
+        case .CMP_absX: executeCMP(absoluteX: operWide)
+        case .DEC_absX: executeDEC(absoluteX: operWide)
+        case .BBS5_rel: executeBBS5(relative: oper)
+        case .CPX_imm: executeCPX(immediate: oper)
+        case .SBC_XInd: executeSBC(preIndirectX: operWide)
         case .NOPE2: executeNOP()
         case .NOPE3: executeNOP()
-        case .CPX_zpg: executeCPX(zeropage: loadOper())
-        case .SBC_zpg: executeSBC(zeropage: loadOper())
-        case .INC_zpg: executeINC(zeropage: loadOper())
-        case .SMB6_zpg: executeSMB6(zeropage: loadOper())
+        case .CPX_zpg: executeCPX(zeropage: oper)
+        case .SBC_zpg: executeSBC(zeropage: oper)
+        case .INC_zpg: executeINC(zeropage: oper)
+        case .SMB6_zpg: executeSMB6(zeropage: oper)
         case .INX_impl: executeINX()
-        case .SBC_imm: executeSBC(immediate: loadOper())
+        case .SBC_imm: executeSBC(immediate: oper)
         case .NOP_impl: executeNOP()
         case .NOPEB: executeNOP()
-        case .CPX_abs: executeCPX(absolute: loadOperWide())
-        case .SBC_abs: executeSBC(absolute: loadOperWide())
-        case .INC_abs: executeINC(absolute: loadOperWide())
-        case .BBS6_rel: executeBBS6(relative: loadOper())
-        case .BEQ_rel: executeBEQ(relative: loadOper())
-        case .SBC_indY: executeSBC(postIndirectY: loadOperWide())
-        case .SBC_zpgi: executeSBC(zeropageIndirect: loadOper())
+        case .CPX_abs: executeCPX(absolute: operWide)
+        case .SBC_abs: executeSBC(absolute: operWide)
+        case .INC_abs: executeINC(absolute: operWide)
+        case .BBS6_rel: executeBBS6(relative: oper)
+        case .BEQ_rel: executeBEQ(relative: oper)
+        case .SBC_indY: executeSBC(postIndirectY: operWide)
+        case .SBC_zpgi: executeSBC(zeropageIndirect: oper)
         case .NOPF3: executeNOP()
         case .NOPF4: executeNOP()
-        case .SBC_zpgX: executeSBC(zeropageX: loadOper())
-        case .INC_zpgX: executeINC(zeropageX: loadOper())
-        case .SMB7_zpg: executeSMB7(zeropage: loadOper())
+        case .SBC_zpgX: executeSBC(zeropageX: oper)
+        case .INC_zpgX: executeINC(zeropageX: oper)
+        case .SMB7_zpg: executeSMB7(zeropage: oper)
         case .SED_impl: executeSED()
-        case .SBC_absY: executeSBC(absoluteY: loadOperWide())
+        case .SBC_absY: executeSBC(absoluteY: operWide)
         case .PLX_impl: executePLX()
         case .NOPFB: executeNOP()
         case .NOPFC: executeNOP()
-        case .SBC_absX: executeSBC(absoluteX: loadOperWide())
-        case .INC_absX: executeINC(absoluteX: loadOperWide())
+        case .SBC_absX: executeSBC(absoluteX: operWide)
+        case .INC_absX: executeINC(absoluteX: operWide)
         case .BBS: executeNOP()
         }
-        pc = pc &+ UInt16(CPU6502.instructionSize(opcode))
     }
 }
 

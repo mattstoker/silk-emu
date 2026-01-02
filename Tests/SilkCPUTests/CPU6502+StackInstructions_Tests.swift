@@ -43,24 +43,24 @@ struct CPU6502StackInstructionTests {
     @Test func executePLA() {
         let s = System(cpu: CPU6502(sp: 0xEA))
         s.cpu.executePLA()
-        #expect(s.cpu == CPU6502(ac: s.cpu.load(stackpage: 0xEA), sp: 0xEA &+ 1))
+        #expect(s.cpu == CPU6502(ac: s.cpu.load(stackpage: 0xEA &+ 1), sp: 0xEA &+ 1))
     }
     
     @Test func executePLP() {
         let s = System(cpu: CPU6502(sp: 0xEA))
         s.cpu.executePLP()
-        #expect(s.cpu == CPU6502(sr: s.cpu.load(stackpage: 0xEA), sp: 0xEA &+ 1))
+        #expect(s.cpu == CPU6502(sr: s.cpu.load(stackpage: 0xEA &+ 1), sp: 0xEA &+ 1))
     }
     
     @Test func executePLX() {
         let s = System(cpu: CPU6502(sp: 0xEA))
         s.cpu.executePLX()
-        #expect(s.cpu == CPU6502(xr: s.cpu.load(stackpage: 0xEA), sp: 0xEA &+ 1))
+        #expect(s.cpu == CPU6502(xr: s.cpu.load(stackpage: 0xEA &+ 1), sp: 0xEA &+ 1))
     }
     
     @Test func executePLY() {
         let s = System(cpu: CPU6502(sp: 0xEA))
         s.cpu.executePLY()
-        #expect(s.cpu == CPU6502(yr: s.cpu.load(stackpage: 0xEA), sp: 0xEA &+ 1))
+        #expect(s.cpu == CPU6502(yr: s.cpu.load(stackpage: 0xEA &+ 1), sp: 0xEA &+ 1))
     }
 }

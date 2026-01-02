@@ -36,7 +36,8 @@ extension CPU6502 {
 // (absolute,X)  JMP (oper,X) 7C     3        6         *
 extension CPU6502 {
     mutating func executeJMP(absoluteXIndirect oper: UInt16) {
-        pc = address(absoluteX: oper)
+        let address = address(indirect: address(absoluteX: oper))
+        pc = address
     }
 }
 
@@ -52,8 +53,7 @@ extension CPU6502 {
 // absolute      JSR oper     20     3        6
 extension CPU6502 {
     mutating func executeJSR(absolute oper: UInt16) {
-        let pcNext = pc &+ 2 // TODO: Should be 3?
-        pushWide(pcNext)
+        pushWide(pc)
         pc = address(absolute: oper)
     }
 }

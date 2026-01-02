@@ -10,7 +10,7 @@ import Testing
 
 // MARK: - Comparision Instruction Tests
 
-@Suite("6502 CPU Counting Instruction Tests")
+@Suite("6502 CPU Comparision Instruction Tests")
 struct CPU6502ComparisionInstructionTests {
     func expectedStatus(_ a: UInt8, _ b: UInt8) -> UInt8 {
         let b = ~b

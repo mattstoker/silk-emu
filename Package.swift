@@ -9,11 +9,12 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "SilkEmu",
+            name: "silk-emu",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .target(name: "SilkCPU"),
-            ]
+            ],
+            path: "Sources/SilkEmu"
         ),
         .target(name: "SilkCPU"),
         .testTarget(
