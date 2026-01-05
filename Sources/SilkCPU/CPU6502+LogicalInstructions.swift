@@ -47,18 +47,18 @@ extension CPU6502 {
         (ac, sr) = CPU6502.and(ac, load(absoluteY: oper), status: sr)
     }
     
-    mutating func executeAND(preIndirectX oper: UInt16) {
+    mutating func executeAND(preIndirectX oper: UInt8) {
         (ac, sr) = CPU6502.and(ac, load(preIndirectX: oper), status: sr)
     }
     
-    mutating func executeAND(postIndirectY oper: UInt16) {
+    mutating func executeAND(postIndirectY oper: UInt8) {
         (ac, sr) = CPU6502.and(ac, load(postIndirectY: oper), status: sr)
     }
 }
 
 // AND
 // AND Memory with Accumulator
-// 
+//
 // A AND (ZPG) -> A
 // N    Z    C    I    D    V
 // +    +    -    -    -    -
@@ -110,11 +110,11 @@ extension CPU6502 {
         (ac, sr) = CPU6502.or(ac, load(absoluteY: oper), status: sr)
     }
     
-    mutating func executeORA(preIndirectX oper: UInt16) {
+    mutating func executeORA(preIndirectX oper: UInt8) {
         (ac, sr) = CPU6502.or(ac, load(preIndirectX: oper), status: sr)
     }
     
-    mutating func executeORA(postIndirectY oper: UInt16) {
+    mutating func executeORA(postIndirectY oper: UInt8) {
         (ac, sr) = CPU6502.or(ac, load(postIndirectY: oper), status: sr)
     }
 }
@@ -173,11 +173,11 @@ extension CPU6502 {
         (ac, sr) = CPU6502.xor(ac, load(absoluteY: oper), status: sr)
     }
     
-    mutating func executeEOR(preIndirectX oper: UInt16) {
+    mutating func executeEOR(preIndirectX oper: UInt8) {
         (ac, sr) = CPU6502.xor(ac, load(preIndirectX: oper), status: sr)
     }
     
-    mutating func executeEOR(postIndirectY oper: UInt16) {
+    mutating func executeEOR(postIndirectY oper: UInt8) {
         (ac, sr) = CPU6502.xor(ac, load(postIndirectY: oper), status: sr)
     }
 }

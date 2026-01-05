@@ -55,12 +55,12 @@ extension CPU6502 {
         sr = sr & ~srCMP | status & srCMP
     }
     
-    mutating func executeCMP(preIndirectX oper: UInt16) {
+    mutating func executeCMP(preIndirectX oper: UInt8) {
         let (_, status) = CPU6502.subtract(ac, load(preIndirectX: oper), status: CPU6502.srCMask)
         sr = sr & ~srCMP | status & srCMP
     }
     
-    mutating func executeCMP(postIndirectY oper: UInt16) {
+    mutating func executeCMP(postIndirectY oper: UInt8) {
         let (_, status) = CPU6502.subtract(ac, load(postIndirectY: oper), status: CPU6502.srCMask)
         sr = sr & ~srCMP | status & srCMP
     }

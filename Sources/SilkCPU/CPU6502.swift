@@ -11,32 +11,33 @@
 // MARK: CPU State & Equality
 
 public struct CPU6502 {
-    enum State {
+    public enum State {
         case boot
         case run
         case wait
         case stop
     }
     
-    var pc: UInt16
-    var ac: UInt8
-    var xr: UInt8
-    var yr: UInt8
-    var sr: UInt8
-    var sp: UInt8
-    var state: State
-    var load: (UInt16) -> UInt8 = { address in return 0xEA }
-    var store: (UInt16, UInt8) -> () = { address, value in return }
-}
+    public internal(set) var pc: UInt16
+    public internal(set) var ac: UInt8
+    public internal(set) var xr: UInt8
+    public internal(set) var yr: UInt8
+    public internal(set) var sr: UInt8
+    public internal(set) var sp: UInt8
+    public internal(set) var state: State
+    public internal(set) var load: (UInt16) -> UInt8 = { address in return 0xEA }
+    public internal(set) var store: (UInt16, UInt8) -> () = { address, value in return }
 
-extension CPU6502 {
-    init(
+    public init(
         pc: UInt16 = 0x00,
         ac: UInt8 = 0x00,
         xr: UInt8 = 0x00,
         yr: UInt8 = 0x00,
         sr: UInt8 = 0x00,
-        sp: UInt8 = 0x00
+        sp: UInt8 = 0x00,
+        state: State = .boot,
+        load: @escaping (UInt16) -> UInt8,
+        store: @escaping (UInt16, UInt8) -> ()
     ) {
         self.pc = pc
         self.ac = ac
@@ -45,10 +46,6 @@ extension CPU6502 {
         self.sr = sr
         self.sp = sp
         self.state = .boot
-    }
-    
-    public init(load: @escaping (UInt16) -> UInt8, store: @escaping (UInt16, UInt8) -> ()) {
-        self.init()
         self.load = load
         self.store = store
     }
@@ -242,16 +239,16 @@ extension CPU6502 {
         return address
     }
 
-    func address(preIndirectX oper: UInt16) -> UInt16 {
-        let pointer = oper &+ UInt16(xr)
+    func address(preIndirectX oper: UInt8) -> UInt16 {
+        let pointer = UInt16(high: CPU6502.zeropage, low: oper &+ xr)
         let low = load(pointer)
         let high = load(pointer &+ 1)
         let address = UInt16(high: high, low: low)
         return address
     }
     
-    func address(postIndirectY oper: UInt16) -> UInt16 {
-        let pointer = oper
+    func address(postIndirectY oper: UInt8) -> UInt16 {
+        let pointer = UInt16(high: CPU6502.zeropage, low: oper)
         let low = load(pointer)
         let high = load(pointer &+ 1)
         let address = UInt16(high: high, low: low) &+ UInt16(yr)
@@ -322,13 +319,13 @@ extension CPU6502 {
         return value
     }
     
-    func load(preIndirectX oper: UInt16) -> UInt8 {
+    func load(preIndirectX oper: UInt8) -> UInt8 {
         let address = address(preIndirectX: oper)
         let value = load(address)
         return value
     }
     
-    func load(postIndirectY oper: UInt16) -> UInt8 {
+    func load(postIndirectY oper: UInt8) -> UInt8 {
         let address = address(postIndirectY: oper)
         let value = load(address)
         return value
@@ -389,12 +386,12 @@ extension CPU6502 {
         store(address, value)
     }
     
-    func store(preIndirectX oper: UInt16, _ value: UInt8) {
+    func store(preIndirectX oper: UInt8, _ value: UInt8) {
         let address = address(preIndirectX: oper)
         store(address, value)
     }
     
-    func store(postIndirectY oper: UInt16, _ value: UInt8) {
+    func store(postIndirectY oper: UInt8, _ value: UInt8) {
         let address = address(postIndirectY: oper)
         store(address, value)
     }
@@ -458,7 +455,7 @@ extension CPU6502 {
     }
 }
 
-// MARK: Program Counter Management
+// MARK: Program Execution
 
 extension CPU6502 {
     enum Instruction: UInt8 {
@@ -974,7 +971,7 @@ extension CPU6502 {
         let instruction = Instruction(rawValue: opcode)!
         switch instruction {
         case .BRK_impl: executeBRK()
-        case .ORA_XInd: executeORA(preIndirectX: operWide)
+        case .ORA_XInd: executeORA(preIndirectX: oper)
         case .NOP02: executeNOP()
         case .NOP03: executeNOP()
         case .TSB_zpg: executeTSB(zeropage: oper)
@@ -990,7 +987,7 @@ extension CPU6502 {
         case .ASL_abs: executeASL(absolute: operWide)
         case .BBR0_rel: executeBBR0(relative: oper)
         case .BPL_rel: executeBPL(relative: oper)
-        case .ORA_indY: executeORA(postIndirectY: operWide)
+        case .ORA_indY: executeORA(postIndirectY: oper)
         case .ORA_zpgi: executeORA(zeropageIndirect: oper)
         case .NOP13: executeNOP()
         case .TRB_zpg: executeTRB(zeropage: oper)
@@ -1006,7 +1003,7 @@ extension CPU6502 {
         case .ASL_absX: executeASL(absoluteX: operWide)
         case .BBR1_rel: executeBBR1(relative: oper)
         case .JSR_abs: executeJSR(absolute: operWide)
-        case .AND_XInd: executeAND(preIndirectX: operWide)
+        case .AND_XInd: executeAND(preIndirectX: oper)
         case .NOP22: executeNOP()
         case .NOP23: executeNOP()
         case .BIT_zpg: executeBIT(zeropage: oper)
@@ -1022,7 +1019,7 @@ extension CPU6502 {
         case .ROL_abs: executeROL(absolute: operWide)
         case .BBR2_rel: executeBBR2(relative: oper)
         case .BMI_rel: executeBMI(relative: oper)
-        case .AND_indY: executeAND(postIndirectY: operWide)
+        case .AND_indY: executeAND(postIndirectY: oper)
         case .AND_zpgi: executeAND(zeropageIndirect: oper)
         case .NOP33: executeNOP()
         case .BIT_zpgX: executeBIT(zeropageX: oper)
@@ -1038,7 +1035,7 @@ extension CPU6502 {
         case .ROL_absX: executeROL(absoluteX: operWide)
         case .BBR3_rel: executeBBR3(relative: oper)
         case .RTI_impl: executeRTI()
-        case .EOR_XInd: executeEOR(preIndirectX: operWide)
+        case .EOR_XInd: executeEOR(preIndirectX: oper)
         case .NOP42: executeNOP()
         case .NOP43: executeNOP()
         case .NOP44: executeNOP()
@@ -1054,7 +1051,7 @@ extension CPU6502 {
         case .LSR_abs: executeLSR(absolute: operWide)
         case .BBR4_rel: executeBBR4(relative: oper)
         case .BVC_rel: executeBVC(relative: oper)
-        case .EOR_indY: executeEOR(postIndirectY: operWide)
+        case .EOR_indY: executeEOR(postIndirectY: oper)
         case .EOR_zpgi: executeEOR(zeropageIndirect: oper)
         case .NOP53: executeNOP()
         case .NOP54: executeNOP()
@@ -1070,7 +1067,7 @@ extension CPU6502 {
         case .LSR_absX: executeLSR(absoluteX: operWide)
         case .BBR5_rel: executeBBR5(relative: oper)
         case .RTS_impl: executeRTS()
-        case .ADC_XInd: executeADC(preIndirectX: operWide)
+        case .ADC_XInd: executeADC(preIndirectX: oper)
         case .NOP62: executeNOP()
         case .NOP63: executeNOP()
         case .STZ_zpg: executeSTZ(zeropage: oper)
@@ -1086,7 +1083,7 @@ extension CPU6502 {
         case .ROR_abs: executeROR(absolute: operWide)
         case .BBR6_rel: executeBBR6(relative: oper)
         case .BVS_rel: executeBVS(relative: oper)
-        case .ADC_indY: executeADC(postIndirectY: operWide)
+        case .ADC_indY: executeADC(postIndirectY: oper)
         case .ADC_zpgi: executeADC(zeropageIndirect: oper)
         case .NOP73: executeNOP()
         case .STZ_zpgX: executeSTZ(zeropageX: oper)
@@ -1102,7 +1099,7 @@ extension CPU6502 {
         case .ROR_absX: executeROR(absoluteX: operWide)
         case .BBR7_rel: executeBBR7(relative: oper)
         case .BRA_rel: executeBRA(relative: oper)
-        case .STA_XInd: executeSTA(preIndirectX: operWide)
+        case .STA_XInd: executeSTA(preIndirectX: oper)
         case .NOP82: executeNOP()
         case .NOP83: executeNOP()
         case .STY_zpg: executeSTY(zeropage: oper)
@@ -1118,7 +1115,7 @@ extension CPU6502 {
         case .STX_abs: executeSTX(absolute: operWide)
         case .BBS0_rel: executeBBS0(relative: oper)
         case .BCC_rel: executeBCC(relative: oper)
-        case .STA_indY: executeSTA(postIndirectY: operWide)
+        case .STA_indY: executeSTA(postIndirectY: oper)
         case .STA_zpgi: executeSTA(zeropageIndirect: oper)
         case .NOP93: executeNOP()
         case .STY_zpgX: executeSTY(zeropageX: oper)
@@ -1134,7 +1131,7 @@ extension CPU6502 {
         case .STZ_absX: executeSTZ(absoluteX: operWide)
         case .BBS1_rel: executeBBS1(relative: oper)
         case .LDY_imm: executeLDY(immediate: oper)
-        case .LDA_XInd: executeLDA(preIndirectX: operWide)
+        case .LDA_XInd: executeLDA(preIndirectX: oper)
         case .LDX_imm: executeLDX(immediate: oper)
         case .NOPA3: executeNOP()
         case .LDY_zpg: executeLDY(zeropage: oper)
@@ -1150,7 +1147,7 @@ extension CPU6502 {
         case .LDX_abs: executeLDX(absolute: operWide)
         case .BBS2_rel: executeBBS2(relative: oper)
         case .BCS_rel: executeBCS(relative: oper)
-        case .LDA_indY: executeLDA(postIndirectY: operWide)
+        case .LDA_indY: executeLDA(postIndirectY: oper)
         case .LDA_zpgi: executeLDA(zeropageIndirect: oper)
         case .NOPB3: executeNOP()
         case .LDY_zpgX: executeLDY(zeropageX: oper)
@@ -1166,7 +1163,7 @@ extension CPU6502 {
         case .LDX_absY: executeLDX(absoluteY: operWide)
         case .BBS3_rel: executeBBS3(relative: oper)
         case .CPY_imm: executeCPY(immediate: oper)
-        case .CMP_XInd: executeCMP(preIndirectX: operWide)
+        case .CMP_XInd: executeCMP(preIndirectX: oper)
         case .NOPC2: executeNOP()
         case .NOPC3: executeNOP()
         case .CPY_zpg: executeCPY(zeropage: oper)
@@ -1182,7 +1179,7 @@ extension CPU6502 {
         case .DEC_abs: executeDEC(absolute: operWide)
         case .BBS4_rel: executeBBS4(relative: oper)
         case .BNE_rel: executeBNE(relative: oper)
-        case .CMP_indY: executeCMP(postIndirectY: operWide)
+        case .CMP_indY: executeCMP(postIndirectY: oper)
         case .CMP_zpgi: executeCMP(zeropageIndirect: oper)
         case .NOPD3: executeNOP()
         case .NOPD4: executeNOP()
@@ -1198,7 +1195,7 @@ extension CPU6502 {
         case .DEC_absX: executeDEC(absoluteX: operWide)
         case .BBS5_rel: executeBBS5(relative: oper)
         case .CPX_imm: executeCPX(immediate: oper)
-        case .SBC_XInd: executeSBC(preIndirectX: operWide)
+        case .SBC_XInd: executeSBC(preIndirectX: oper)
         case .NOPE2: executeNOP()
         case .NOPE3: executeNOP()
         case .CPX_zpg: executeCPX(zeropage: oper)
@@ -1214,7 +1211,7 @@ extension CPU6502 {
         case .INC_abs: executeINC(absolute: operWide)
         case .BBS6_rel: executeBBS6(relative: oper)
         case .BEQ_rel: executeBEQ(relative: oper)
-        case .SBC_indY: executeSBC(postIndirectY: operWide)
+        case .SBC_indY: executeSBC(postIndirectY: oper)
         case .SBC_zpgi: executeSBC(zeropageIndirect: oper)
         case .NOPF3: executeNOP()
         case .NOPF4: executeNOP()
@@ -1230,6 +1227,18 @@ extension CPU6502 {
         case .INC_absX: executeINC(absoluteX: operWide)
         case .BBS: executeNOP()
         }
+    }
+    
+    public mutating func wait() {
+        state = .wait
+    }
+    
+    public mutating func resume() {
+        state = .run
+    }
+    
+    public mutating func stop() {
+        state = .stop
     }
 }
 

@@ -47,11 +47,11 @@ extension CPU6502 {
         ac = load(absoluteY: oper)
     }
     
-    mutating func executeLDA(preIndirectX oper: UInt16) {
+    mutating func executeLDA(preIndirectX oper: UInt8) {
         ac = load(preIndirectX: oper)
     }
     
-    mutating func executeLDA(postIndirectY oper: UInt16) {
+    mutating func executeLDA(postIndirectY oper: UInt8) {
         ac = load(postIndirectY: oper)
     }
 }
@@ -175,11 +175,11 @@ extension CPU6502 {
         store(absoluteY: oper, ac)
     }
     
-    mutating func executeSTA(preIndirectX oper: UInt16) {
+    mutating func executeSTA(preIndirectX oper: UInt8) {
         store(preIndirectX: oper, ac)
     }
     
-    mutating func executeSTA(postIndirectY oper: UInt16) {
+    mutating func executeSTA(postIndirectY oper: UInt8) {
         store(postIndirectY: oper, ac)
     }
 }

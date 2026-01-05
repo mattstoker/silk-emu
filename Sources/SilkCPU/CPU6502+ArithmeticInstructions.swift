@@ -47,11 +47,11 @@ extension CPU6502 {
         (ac, sr) = CPU6502.add(ac, load(absoluteY: oper), status: sr)
     }
     
-    mutating func executeADC(preIndirectX oper: UInt16) {
+    mutating func executeADC(preIndirectX oper: UInt8) {
         (ac, sr) = CPU6502.add(ac, load(preIndirectX: oper), status: sr)
     }
     
-    mutating func executeADC(postIndirectY oper: UInt16) {
+    mutating func executeADC(postIndirectY oper: UInt8) {
         (ac, sr) = CPU6502.add(ac, load(postIndirectY: oper), status: sr)
     }
 }
@@ -110,11 +110,11 @@ extension CPU6502 {
         (ac, sr) = CPU6502.subtract(ac, load(absoluteY: oper), status: sr)
     }
     
-    mutating func executeSBC(preIndirectX oper: UInt16) {
+    mutating func executeSBC(preIndirectX oper: UInt8) {
         (ac, sr) = CPU6502.subtract(ac, load(preIndirectX: oper), status: sr)
     }
     
-    mutating func executeSBC(postIndirectY oper: UInt16) {
+    mutating func executeSBC(postIndirectY oper: UInt8) {
         (ac, sr) = CPU6502.subtract(ac, load(postIndirectY: oper), status: sr)
     }
 }
