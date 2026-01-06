@@ -8,6 +8,8 @@
 //  https://www.masswerk.at/6502/6502_instruction_set.html
 //
 
+import Foundation
+
 // MARK: CPU State & Equality
 
 public struct CPU6502 {
@@ -80,9 +82,21 @@ extension CPU6502: CustomDebugStringConvertible {
     public var debugDescription: String {
         let opcode = load(absolute: pc)
         let instruction = Instruction(rawValue: opcode)!
-        let operLow = load(absolute: pc &+ 1)
-        let operHigh = load(absolute: pc &+ 2)
-        return "PC: 0x\(String(pc, radix: 16)) \(instruction)(\(String(opcode, radix: 16))) 0x\(String(operLow, radix: 16)) 0x\(String(operHigh, radix: 16))   AC: 0x\(String(ac, radix: 16)) XR: 0x\(String(xr, radix: 16)) YR: 0x\(String(yr, radix: 16)) SR: 0x\(String(sr, radix: 16)) SP: 0x\(String(sp, radix: 16))"
+        let size = instruction.size
+        let pcState = "PC: \(String(format: "0x%04X", pc)) \(instruction.name)(\(String(format: "0x%02X", opcode)))"
+        let oper = {
+            switch size {
+            case 0, 1: "      "
+            case 2: "\(String(format: "  0x%02X", load(absolute: pc &+ 1)))"
+            default: "\(String(format: "0x%04X", UInt16(high: load(absolute: pc &+ 2), low: load(absolute: pc &+ 1))))"
+            }
+        }()
+        let acState = "AC: \(String(format: "0x%02X", ac))"
+        let xrState = "SR: \(String(format: "0x%02X", xr))"
+        let yrState = "YR: \(String(format: "0x%02X", yr))"
+        let srState = "SR: \(String(format: "0x%02X", sr))"
+        let spState = "SP: \(String(format: "0x%02X", sp))"
+        return "\(pcState) \(oper)   \(acState) \(xrState) \(yrState) \(srState) \(spState)"
     }
 }
 
@@ -716,16 +730,10 @@ extension CPU6502 {
         case INC_absX = 0xFE
         case BBS = 0xFF
     }
-    
-    static func instructionOpcode(_ instruction: Instruction) -> UInt8 {
-        return instruction.rawValue
-    }
-    
-    static func instructionSize(_ instruction: Instruction) -> UInt8 {
-        return instructionSize(instruction.rawValue)
-    }
-    
-    static func instructionSize(_ opcode: UInt8) -> UInt8 {
+}
+
+extension CPU6502.Instruction {
+    var size: UInt8 {
         switch opcode {
         case 0x69: return 2
         case 0x65: return 2
@@ -944,6 +952,18 @@ extension CPU6502 {
     }
 }
 
+extension CPU6502.Instruction {
+    var opcode: UInt8 {
+        return rawValue
+    }
+    
+    var name: String {
+        let description = String(describing: self)
+        let endIndex = description.index(description.startIndex, offsetBy: 3)
+        return String(description[..<endIndex])
+    }
+}
+
 extension CPU6502 {
     public mutating func execute() {
         switch state {
@@ -963,12 +983,11 @@ extension CPU6502 {
         }
         
         let opcode = load(absolute: pc)
-        let size = CPU6502.instructionSize(opcode)
-        let oper: UInt8 = size <= 1 ? 0xAA : load(absolute: pc &+ 1)
-        let operWideHigh = size <= 2 ? 0xBB : load(absolute: pc &+ 2)
-        let operWide = UInt16(high: operWideHigh, low: oper)
-        pc = pc &+ UInt16(size)
         let instruction = Instruction(rawValue: opcode)!
+        let oper: UInt8 = instruction.size <= 1 ? 0xAA : load(absolute: pc &+ 1)
+        let operWideHigh = instruction.size <= 2 ? 0xBB : load(absolute: pc &+ 2)
+        let operWide = UInt16(high: operWideHigh, low: oper)
+        pc = pc &+ UInt16(instruction.size)
         switch instruction {
         case .BRK_impl: executeBRK()
         case .ORA_XInd: executeORA(preIndirectX: oper)

@@ -29,6 +29,7 @@ struct ContentView: View {
     @State var showVideo: Bool = true
     @State var stepCount: Int = 1
     @State var stepTimer: Timer? = nil
+    @State var breakpoint: String = ""
     @State var log: String = ""
     @EnvironmentObject var system: System
     
@@ -41,62 +42,78 @@ struct ContentView: View {
     var body: some View {
         HStack {
             TextEditor(text: $log)
-                .disabled(true)
+                .font(.system(size: 12.0, design: .monospaced))
             VStack {
-                // MARK: Program
-                
-                Button(
-                    action: { programImporterShowing = true },
-                    label: { Text("Load Program") }
-                )
-                .fileImporter(isPresented: $programImporterShowing, allowedContentTypes: [.data]) { result in
-                    switch result {
-                    case .failure(let error):
-                        print(error)
-                    case .success(let url):
-                        programFile = url
-                        guard let programData = try? Data(contentsOf: url) else {
-                            print("Couldn't open program \(url)")
-                            return
+                // MARK: Program Execution
+                switch system.cpu.state {
+                case .boot, .stop:
+                    Button(
+                        action: { programImporterShowing = true },
+                        label: { Text("Load Program") }
+                    )
+                    .fileImporter(isPresented: $programImporterShowing, allowedContentTypes: [.data]) { result in
+                        switch result {
+                        case .failure(let error):
+                            print(error)
+                        case .success(let url):
+                            programFile = url
+                            guard let programData = try? Data(contentsOf: url) else {
+                                print("Couldn't open program \(url)")
+                                return
+                            }
+                            var program: [UInt8] = Array(repeating: 0x00, count: programData.count)
+                            programData.copyBytes(to: &program, count: min(program.count, programData.count))
+                            
+                            system.load(data: program, startingAt: UInt16(programOffset))
+                            log += "\(system.cpu.debugDescription)\n"
                         }
-                        var program: [UInt8] = Array(repeating: 0x00, count: programData.count)
-                        programData.copyBytes(to: &program, count: min(program.count, programData.count))
-                        
-                        system.load(data: program, startingAt: UInt16(programOffset))
                     }
-                }
-                
-                // MARK: Execution
-                
-                if system.cpu.state == .run {
+                case .run:
                     if stepTimer == nil {
-                        Button(
-                            action: {
-                                system.execute(count: stepCount)
-                                log += "\(system.cpu.debugDescription)\n"
-                            },
-                            label: { Text("Step \(stepCount)") }
-                        )
-                        TextField("Count", value: $stepCount, formatter: NumberFormatter())
-                            .frame(width: 50)
-                        Button(
-                            action: {
-                                log = ""
-                                stepTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
-                                    system.execute()
-                                }
-                            },
-                            label: { Text("Run") }
-                        )
+                        HStack {
+                            TextField("Break", text: $breakpoint)
+                                .frame(width: 50)
+                            Button(
+                                action: {
+                                    if let value = UInt16(breakpoint, radix: 16) {
+                                        system.execute(until: value)
+                                        log += "\(system.cpu.debugDescription)\n"
+                                    } else {
+                                        log = ""
+                                        stepTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
+                                            system.execute()
+                                        }
+                                    }
+                                },
+                                label: { if UInt16(breakpoint, radix: 16) == nil { Text("Run") } else { Text("Run until \(breakpoint)") } }
+                            )
+                        }
+                        HStack {
+                            TextField("Steps", value: $stepCount, format: IntegerFormatStyle<Int>())
+                                .frame(width: 50)
+                            Button(
+                                action: {
+                                    system.execute(count: stepCount)
+                                    log += "\(system.cpu.debugDescription)\n"
+                                },
+                                label: { Text("Step \(stepCount)") }
+                            )
+                        }
                     } else {
                         Button(
                             action: {
                                 stepTimer?.invalidate()
                                 stepTimer = nil
+                                log += "\(system.cpu.debugDescription)\n"
                             },
                             label: { Text("Pause") }
                         )
                     }
+                case .wait:
+                    Button(
+                        action: { system.cpu.resume() },
+                        label: { Text("Resume") }
+                    )
                 }
                 
                 // MARK: CPU State
@@ -131,6 +148,18 @@ struct ContentView: View {
                         Text(String(describing: system.cpu.state))
                     }
                 }
+                switch system.cpu.state {
+                case .boot, .stop:
+                    HStack { }
+                case .run, .wait:
+                    Button(
+                        action: {
+                            system.reset()
+                            log = ""
+                        },
+                        label: { Text("Reset") }
+                    )
+                }
                 
                 // MARK: Memory State
                 
@@ -163,6 +192,7 @@ struct ContentView: View {
 class System: ObservableObject {
     @Published var cpu: CPU6502 = CPU6502(load: { _ in 0 }, store: { _, _ in })
     @Published var memory: [UInt8] = Array((0x0000...0xFFFF).map { _ in UInt8.min })
+    
     init() {
         reset()
     }
@@ -170,13 +200,6 @@ class System: ObservableObject {
     func reset() {
         self.memory = Array((0x0000...0xFFFF).map { _ in UInt8.random(in: 0x00...0xFF) })
         self.cpu = CPU6502(
-            pc: cpu.pc,
-            ac: cpu.ac,
-            xr: cpu.xr,
-            yr: cpu.yr,
-            sr: cpu.sr,
-            sp: cpu.sp,
-            state: cpu.state,
             load: { [weak self] address in return self?.memory[Int(address)] ?? 0xEA },
             store: { [weak self] address, value in self?.memory[Int(address)] = value }
         )
@@ -195,6 +218,12 @@ class System: ObservableObject {
         for _ in 0..<count {
             cpu.execute()
         }
+    }
+    
+    func execute(until breakpoint: UInt16) {
+        repeat {
+            cpu.execute()
+        } while cpu.pc != breakpoint
     }
     
     func screenshot() -> NSImage {
