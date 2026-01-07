@@ -27,9 +27,12 @@ struct ContentView: View {
     @State var programOffset: Int = 0xE000 // TODO: UI
     @State var showMemory: Bool = false
     @State var showVideo: Bool = true
-    @State var stepCount: Int = 1
+    @State var videoStart: UInt16? = 0x2000
+    @State var videoEnd: UInt16? = 0x4000
+    @State var videoLine: UInt16? = 0x80
+    @State var stepCount: Int? = nil
     @State var stepTimer: Timer? = nil
-    @State var breakpoint: String = ""
+    @State var breakpoint: UInt16? = nil
     @State var log: String = ""
     @EnvironmentObject var system: System
     
@@ -41,8 +44,25 @@ struct ContentView: View {
     
     var body: some View {
         HStack {
-            TextEditor(text: $log)
-                .font(.system(size: 12.0, design: .monospaced))
+            VStack {
+                TextEditor(text: $log)
+                    .font(.system(size: 12.0, design: .monospaced))
+                HStack {
+                    Toggle("Video View", isOn: $showVideo)
+                    TextField("Start", value: $videoStart, format: .hex).frame(width: 50)
+                    TextField("End", value: $videoEnd, format: .hex).frame(width: 50)
+                    TextField("Line", value: $videoLine, format: .hex).frame(width: 50)
+                }
+                if showVideo, let start = videoStart, let end = videoEnd, let line = videoLine {
+                    let screenshot = system.screenshot(start: start, end: end, line: line)
+                    Image(nsImage: screenshot)
+                        .interpolation(.none)
+                        .resizable(resizingMode: .stretch)
+                        .frame(idealWidth: screenshot.size.width * 16, idealHeight: screenshot.size.height * 16)
+                        .aspectRatio(contentMode: .fit)
+                }
+            }
+            .padding()
             VStack {
                 // MARK: Program Execution
                 switch system.cpu.state {
@@ -71,32 +91,41 @@ struct ContentView: View {
                 case .run:
                     if stepTimer == nil {
                         HStack {
-                            TextField("Break", text: $breakpoint)
-                                .frame(width: 50)
                             Button(
                                 action: {
-                                    if let value = UInt16(breakpoint, radix: 16) {
-                                        system.execute(until: value)
+                                    if let breakpoint = breakpoint {
+                                        system.execute(until: breakpoint)
                                         log += "\(system.cpu.debugDescription)\n"
                                     } else {
-                                        log = ""
                                         stepTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
                                             system.execute()
                                         }
+                                        log = ""
                                     }
                                 },
-                                label: { if UInt16(breakpoint, radix: 16) == nil { Text("Run") } else { Text("Run until \(breakpoint)") } }
+                                label: { if let breakpoint = breakpoint { Text("Run until \(breakpoint)") } else { Text("Run") } }
                             )
+                            TextField("Break", value: $breakpoint, format: .hex)
+                                .frame(width: 50)
                         }
                         HStack {
-                            TextField("Steps", value: $stepCount, format: IntegerFormatStyle<Int>())
-                                .frame(width: 50)
                             Button(
                                 action: {
-                                    system.execute(count: stepCount)
+                                    system.execute(count: stepCount ?? 1)
                                     log += "\(system.cpu.debugDescription)\n"
                                 },
-                                label: { Text("Step \(stepCount)") }
+                                label: { Text("Step\(stepCount.map { " 0x\($0)" } ?? "")") }
+                            )
+                            TextField("Steps", value: $stepCount, format: .hex)
+                                .frame(width: 50)
+                        }
+                        HStack {
+                            Button(
+                                action: {
+                                    system.execute(after: 0x60 /*RTS*/)
+                                    log += "\(system.cpu.debugDescription)\n"
+                                },
+                                label: { Text("Step After Next RTS") }
                             )
                         }
                     } else {
@@ -176,15 +205,71 @@ struct ContentView: View {
                         .width(20.0)
                     }
                     .frame(width: 130.0)
-                }
-                Toggle("Video View", isOn: $showVideo)
-                if showVideo {
-                    Image(nsImage: system.screenshot())
+                } else {
+                    Spacer()
                 }
             }
             .padding()
         }
     }
+}
+
+// MARK: - Hex Formatter
+
+public struct HexFormatter<T>: ParseableFormatStyle where T: FixedWidthInteger {
+    public func format(_ value: T) -> String {
+        String(value, radix: 16).uppercased()
+    }
+    
+    public struct Strategy: SwiftUI.ParseStrategy {
+        public func parse(_ value: String) throws -> T {
+            guard let result = T(value, radix: 16) else { throw Error.conversionError }
+            return result
+        }
+        
+        public enum Error: Swift.Error {
+            case conversionError
+        }
+        
+        public typealias ParseInput = String
+        public typealias ParseOutput = T
+    }
+    
+    public typealias FormatInput = Strategy.ParseOutput
+    public typealias FormatOutput = Strategy.ParseInput
+    
+    public var parseStrategy: Strategy { Strategy() }
+}
+
+extension FormatStyle where Self == IntegerFormatStyle<UInt> {
+    public static var hex: HexFormatter<UInt> { HexFormatter<UInt>() }
+}
+extension FormatStyle where Self == IntegerFormatStyle<UInt8> {
+    public static var hex: HexFormatter<UInt8> { HexFormatter<UInt8>() }
+}
+extension FormatStyle where Self == IntegerFormatStyle<UInt16> {
+    public static var hex: HexFormatter<UInt16> { HexFormatter<UInt16>() }
+}
+extension FormatStyle where Self == IntegerFormatStyle<UInt32> {
+    public static var hex: HexFormatter<UInt32> { HexFormatter<UInt32>() }
+}
+extension FormatStyle where Self == IntegerFormatStyle<UInt64> {
+    public static var hex: HexFormatter<UInt64> { HexFormatter<UInt64>() }
+}
+extension FormatStyle where Self == IntegerFormatStyle<Int> {
+    public static var hex: HexFormatter<Int> { HexFormatter<Int>() }
+}
+extension FormatStyle where Self == IntegerFormatStyle<Int8> {
+    public static var hex: HexFormatter<Int8> { HexFormatter<Int8>() }
+}
+extension FormatStyle where Self == IntegerFormatStyle<Int16> {
+    public static var hex: HexFormatter<Int16> { HexFormatter<Int16>() }
+}
+extension FormatStyle where Self == IntegerFormatStyle<Int32> {
+    public static var hex: HexFormatter<Int32> { HexFormatter<Int32>() }
+}
+extension FormatStyle where Self == IntegerFormatStyle<Int64> {
+    public static var hex: HexFormatter<Int64> { HexFormatter<Int64>() }
 }
 
 // MARK: - System
@@ -226,27 +311,40 @@ class System: ObservableObject {
         } while cpu.pc != breakpoint
     }
     
-    func screenshot() -> NSImage {
-        let ppm = Self.screenshot(cpu: cpu, start: 0x2000, end: 0x4000, width: 0x80)
+    func execute(after opcode: UInt8) {
+        repeat {
+            cpu.execute()
+        } while memory[Int(cpu.pc)] != opcode
+        cpu.execute()
+    }
+    
+    func screenshot(start: UInt16, end: UInt16, line: UInt16) -> NSImage {
+        let ppm = Self.memoryPPM(cpu: cpu, start: start, end: end, line: line)
         let image = NSImage(data: ppm.data(using: .utf8)!)!
         return image
     }
     
-    static func screenshot(cpu: CPU6502, start: UInt16, end: UInt16, width: Int) -> String {
-        let count = Int(end) - Int(start) + 1
+    static func memoryPPM(
+        cpu: CPU6502,
+        start: UInt16,
+        end: UInt16,
+        line: UInt16,
+        channelMaxValue: UInt8 = 3,
+        valueChannelConverter: (UInt8) -> (UInt8, UInt8, UInt8) = { (($0 & 0b00000011) >> 0, ($0 & 0b00001100) >> 2, ($0 & 0b00110000) >> 4) }
+    ) -> String {
+        let count = Int(min(end, UInt16.max)) + 1 - Int(min(start, min(end, UInt16.max)))
+        let width = Int(line)
         let height = count / width
         var screenshot = ""
         screenshot.append("P3\n")
         screenshot.append("\(width) \(height)\n")
-        screenshot.append("3\n")
+        screenshot.append("\(channelMaxValue)\n")
         for y in 0..<height {
             for x in 0..<width {
                 let pixelIndex = y * width + x
                 let address = pixelIndex > count ? nil : start + UInt16(pixelIndex)
                 let value: UInt8 = address.map { cpu.load($0) } ?? UInt8.min
-                let r = ((value & 0b00000011) >> 0)
-                let g = ((value & 0b00001100) >> 2)
-                let b = ((value & 0b00110000) >> 4)
+                let (r, g, b) = valueChannelConverter(value)
                 screenshot.append("\(r) \(g) \(b)\n")
             }
         }
