@@ -103,7 +103,7 @@ struct ContentView: View {
                                         log = ""
                                     }
                                 },
-                                label: { if let breakpoint = breakpoint { Text("Run until \(breakpoint)") } else { Text("Run") } }
+                                label: { if let breakpoint = breakpoint { Text("Run until 0x\(String(breakpoint, radix: 16))") } else { Text("Run") } }
                             )
                             TextField("Break", value: $breakpoint, format: .hex)
                                 .frame(width: 50)
@@ -114,7 +114,7 @@ struct ContentView: View {
                                     system.execute(count: stepCount ?? 1)
                                     log += "\(system.cpu.debugDescription)\n"
                                 },
-                                label: { Text("Step\(stepCount.map { " 0x\($0)" } ?? "")") }
+                                label: { Text("Step\(stepCount.map { " 0x\(String($0, radix: 16))" } ?? "")") }
                             )
                             TextField("Steps", value: $stepCount, format: .hex)
                                 .frame(width: 50)
@@ -122,7 +122,17 @@ struct ContentView: View {
                         HStack {
                             Button(
                                 action: {
-                                    system.execute(after: 0x60 /*RTS*/)
+                                    system.execute(upTo: 0x20 /*JSR*/)
+                                    log += "\(system.cpu.debugDescription)\n"
+                                },
+                                label: { Text("Step Until Next JSR") }
+                            )
+                        }
+                        HStack {
+                            Button(
+                                action: {
+                                    system.execute(upTo: 0x60 /*RTS*/)
+                                    system.execute()
                                     log += "\(system.cpu.debugDescription)\n"
                                 },
                                 label: { Text("Step After Next RTS") }
@@ -311,11 +321,10 @@ class System: ObservableObject {
         } while cpu.pc != breakpoint
     }
     
-    func execute(after opcode: UInt8) {
+    func execute(upTo opcode: UInt8) {
         repeat {
             cpu.execute()
         } while memory[Int(cpu.pc)] != opcode
-        cpu.execute()
     }
     
     func screenshot(start: UInt16, end: UInt16, line: UInt16) -> NSImage {
@@ -332,9 +341,9 @@ class System: ObservableObject {
         channelMaxValue: UInt8 = 3,
         valueChannelConverter: (UInt8) -> (UInt8, UInt8, UInt8) = { (($0 & 0b00000011) >> 0, ($0 & 0b00001100) >> 2, ($0 & 0b00110000) >> 4) }
     ) -> String {
-        let count = Int(min(end, UInt16.max)) + 1 - Int(min(start, min(end, UInt16.max)))
+        let count = Int(min(end, UInt16.max)) - Int(min(start, min(end, UInt16.max)))
         let width = Int(line)
-        let height = count / width
+        let height = Int((Double(count) / Double(width)).rounded(.up))
         var screenshot = ""
         screenshot.append("P3\n")
         screenshot.append("\(width) \(height)\n")
@@ -342,7 +351,7 @@ class System: ObservableObject {
         for y in 0..<height {
             for x in 0..<width {
                 let pixelIndex = y * width + x
-                let address = pixelIndex > count ? nil : start + UInt16(pixelIndex)
+                let address = pixelIndex >= count ? nil : start + UInt16(pixelIndex)
                 let value: UInt8 = address.map { cpu.load($0) } ?? UInt8.min
                 let (r, g, b) = valueChannelConverter(value)
                 screenshot.append("\(r) \(g) \(b)\n")

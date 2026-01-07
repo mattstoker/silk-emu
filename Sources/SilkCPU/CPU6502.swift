@@ -117,7 +117,7 @@ extension CPU6502 {
 
 extension CPU6502 {
     static func increment(_ a: UInt8, status: UInt8) -> (result: UInt8, status: UInt8) {
-        let (result, s) = add(a, 1, status: status)
+        let (result, s) = add(a, 1, status: status & ~CPU6502.srCMask)
         return (result: result, status: (s & ~CPU6502.srCMask) | (status & CPU6502.srCMask))
     }
     
