@@ -77,6 +77,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePLA() {
         ac = pull()
+        sr = CPU6502.flags(sr, value: ac)
     }
 }
 
@@ -108,6 +109,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePLX() {
         xr = pull()
+        sr = CPU6502.flags(sr, value: xr)
     }
 }
 
@@ -122,5 +124,6 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executePLY() {
         yr = pull()
+        sr = CPU6502.flags(sr, value: yr)
     }
 }

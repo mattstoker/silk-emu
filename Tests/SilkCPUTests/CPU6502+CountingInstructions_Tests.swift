@@ -63,7 +63,7 @@ struct CPU6502CountingInstructionTests {
     
     @Test func executeINCAbsoluteX() {
         let s = System(cpu: CPU6502())
-        for address in UInt16.min...UInt16(0x0123) { //UInt16.min...UInt16.max {
+        for address in MemoryTestAddresses { //UInt16.min...UInt16.max {
             for xr in UInt8.min...UInt8.max {
                 s.cpu = CPU6502(xr: xr)
                 let memoryOperand = s.cpu.load(absoluteX: address)
@@ -155,7 +155,7 @@ struct CPU6502CountingInstructionTests {
     
     @Test func executeDECAbsoluteX() {
         let s = System(cpu: CPU6502())
-        for address in UInt16.min...UInt16(0x0123) { //UInt16.min...UInt16.max {
+        for address in MemoryTestAddresses { //UInt16.min...UInt16.max {
             for xr in UInt8.min...UInt8.max {
                 s.cpu = CPU6502(xr: xr)
                 let memoryOperand = Int8(bitPattern: s.cpu.load(absoluteX: address))

@@ -65,7 +65,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeANDAbsolute() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand)
                 let memoryOperand = s.cpu.load(absolute: address)
                 let expectedResult = registerOperand & memoryOperand
@@ -79,7 +79,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeANDAbsoluteX() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
                 let memoryOperand = s.cpu.load(absoluteX: address)
                 let expectedResult = registerOperand & memoryOperand
@@ -93,7 +93,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeANDAbsoluteY() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
                 let memoryOperand = s.cpu.load(absoluteY: address)
                 let expectedResult = registerOperand & memoryOperand
@@ -107,7 +107,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeANDIndirectX() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in UInt8.min...UInt8.max {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
                 let memoryOperand = s.cpu.load(preIndirectX: address)
                 let expectedResult = registerOperand & memoryOperand
@@ -121,7 +121,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeANDIndirectY() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in UInt8.min...UInt8.max {
                 s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
                 let memoryOperand = s.cpu.load(postIndirectY: address)
                 let expectedResult = registerOperand & memoryOperand
@@ -190,7 +190,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeORAAbsolute() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand)
                 let memoryOperand = s.cpu.load(absolute: address)
                 let expectedResult = registerOperand | memoryOperand
@@ -204,7 +204,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeORAAbsoluteX() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
                 let memoryOperand = s.cpu.load(absoluteX: address)
                 let expectedResult = registerOperand | memoryOperand
@@ -218,7 +218,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeORAAbsoluteY() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
                 let memoryOperand = s.cpu.load(absoluteY: address)
                 let expectedResult = registerOperand | memoryOperand
@@ -232,7 +232,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeORAIndirectX() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in UInt8.min...UInt8.max {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
                 let memoryOperand = s.cpu.load(preIndirectX: address)
                 let expectedResult = registerOperand | memoryOperand
@@ -246,7 +246,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeORAIndirectY() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in UInt8.min...UInt8.max {
                 s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
                 let memoryOperand = s.cpu.load(postIndirectY: address)
                 let expectedResult = registerOperand | memoryOperand
@@ -315,7 +315,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeEORAbsolute() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand)
                 let memoryOperand = s.cpu.load(absolute: address)
                 let expectedResult = registerOperand ^ memoryOperand
@@ -329,7 +329,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeEORAbsoluteX() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
                 let memoryOperand = s.cpu.load(absoluteX: address)
                 let expectedResult = registerOperand ^ memoryOperand
@@ -343,7 +343,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeEORAbsoluteY() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
                 let memoryOperand = s.cpu.load(absoluteY: address)
                 let expectedResult = registerOperand ^ memoryOperand
@@ -357,7 +357,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeEORIndirectX() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in UInt8.min...UInt8.max {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x2A)
                 let memoryOperand = s.cpu.load(preIndirectX: address)
                 let expectedResult = registerOperand ^ memoryOperand
@@ -371,7 +371,7 @@ struct CPU6502LogicalInstructionTests {
     @Test func executeEORIndirectY() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in UInt8.min...UInt8.max {
                 s.cpu = CPU6502(ac: registerOperand, yr: 0x2A)
                 let memoryOperand = s.cpu.load(postIndirectY: address)
                 let expectedResult = registerOperand ^ memoryOperand

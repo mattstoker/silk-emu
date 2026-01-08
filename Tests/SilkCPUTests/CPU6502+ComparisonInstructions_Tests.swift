@@ -67,7 +67,7 @@ struct CPU6502ComparisionInstructionTests {
     @Test func executeCMPAbsolute() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand)
                 let memoryOperand = s.cpu.load(absolute: address)
                 let expectedStatus = expectedStatus(registerOperand, memoryOperand)
@@ -80,7 +80,7 @@ struct CPU6502ComparisionInstructionTests {
     @Test func executeCMPAbsoluteX() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x74)
                 let memoryOperand = s.cpu.load(absoluteX: address)
                 let expectedStatus = expectedStatus(registerOperand, memoryOperand)
@@ -93,7 +93,7 @@ struct CPU6502ComparisionInstructionTests {
     @Test func executeCMPAbsoluteY() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand, yr: 0x74)
                 let memoryOperand = s.cpu.load(absoluteY: address)
                 let expectedStatus = expectedStatus(registerOperand, memoryOperand)
@@ -106,7 +106,7 @@ struct CPU6502ComparisionInstructionTests {
     @Test func executeCMPIndirectX() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in UInt8.min...UInt8.max {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x74)
                 let memoryOperand = s.cpu.load(preIndirectX: address)
                 let expectedStatus = expectedStatus(registerOperand, memoryOperand)
@@ -119,7 +119,7 @@ struct CPU6502ComparisionInstructionTests {
     @Test func executeCMPIndirectY() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in UInt8.min...UInt8.max {
                 s.cpu = CPU6502(ac: registerOperand, yr: 0x74)
                 let memoryOperand = s.cpu.load(postIndirectY: address)
                 let expectedStatus = expectedStatus(registerOperand, memoryOperand)
@@ -170,7 +170,7 @@ struct CPU6502ComparisionInstructionTests {
     @Test func executeCPXAbsolute() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(xr: registerOperand)
                 let memoryOperand = s.cpu.load(absolute: address)
                 let expectedStatus = expectedStatus(registerOperand, memoryOperand)
@@ -208,7 +208,7 @@ struct CPU6502ComparisionInstructionTests {
     @Test func executeCPYAbsolute() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(yr: registerOperand)
                 let memoryOperand = s.cpu.load(absolute: address)
                 let expectedStatus = expectedStatus(registerOperand, memoryOperand)

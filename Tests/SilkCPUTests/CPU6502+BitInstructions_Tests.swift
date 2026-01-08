@@ -26,7 +26,7 @@ struct CPU6502BitInstructionTests {
     @Test func executeBITAbsolute() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand)
                 let memoryOperand = s.cpu.load(absolute: address)
                 let expectedStatus = expectedStatus(registerOperand, registerOperand & memoryOperand)
@@ -50,7 +50,7 @@ struct CPU6502BitInstructionTests {
     @Test func executeBITAbsoluteX() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand, xr: 0x38)
                 let memoryOperand = s.cpu.load(absoluteX: address)
                 let expectedStatus = expectedStatus(registerOperand, registerOperand & memoryOperand)
@@ -89,7 +89,7 @@ struct CPU6502BitInstructionTests {
     @Test func executeTRBAbsolute() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand)
                 let memoryOperand = s.cpu.load(absolute: address)
                 let expectedResult = ~registerOperand & memoryOperand
@@ -119,7 +119,7 @@ struct CPU6502BitInstructionTests {
     @Test func executeTSBAbsolute() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 s.cpu = CPU6502(ac: registerOperand)
                 let memoryOperand = s.cpu.load(absolute: address)
                 let expectedResult = registerOperand | memoryOperand

@@ -82,7 +82,7 @@ struct CPU6502ArithmeticInstructionTests {
     @Test func executeADCAbsolute() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 for carryOperand in [false, true] {
                     s.cpu = CPU6502(ac: registerOperand, sr: carryOperand ? CPU6502.srCMask : 0x00)
                     let memoryOperand = s.cpu.load(absolute: address)
@@ -98,7 +98,7 @@ struct CPU6502ArithmeticInstructionTests {
     @Test func executeADCAbsoluteX() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 for carryOperand in [false, true] {
                     s.cpu = CPU6502(ac: registerOperand, xr: 0x63, sr: carryOperand ? CPU6502.srCMask : 0x00)
                     let memoryOperand = s.cpu.load(absoluteX: address)
@@ -114,7 +114,7 @@ struct CPU6502ArithmeticInstructionTests {
     @Test func executeADCAbsoluteY() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 for carryOperand in [false, true] {
                     s.cpu = CPU6502(ac: registerOperand, yr: 0x74, sr: carryOperand ? CPU6502.srCMask : 0x00)
                     let memoryOperand = s.cpu.load(absoluteY: address)
@@ -130,7 +130,7 @@ struct CPU6502ArithmeticInstructionTests {
     @Test func executeADCIndirectX() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in UInt8.min...UInt8.max {
                 for carryOperand in [false, true] {
                     s.cpu = CPU6502(ac: registerOperand, xr: 0x63, sr: carryOperand ? CPU6502.srCMask : 0x00)
                     let memoryOperand = s.cpu.load(preIndirectX: address)
@@ -146,7 +146,7 @@ struct CPU6502ArithmeticInstructionTests {
     @Test func executeADCIndirectY() {
         let s = System(cpu: CPU6502())
         for registerOperand in UInt8.min...UInt8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in UInt8.min...UInt8.max {
                 for carryOperand in [false, true] {
                     s.cpu = CPU6502(ac: registerOperand, yr: 0x74, sr: carryOperand ? CPU6502.srCMask : 0x00)
                     let memoryOperand = s.cpu.load(postIndirectY: address)
@@ -225,7 +225,7 @@ struct CPU6502ArithmeticInstructionTests {
     @Test func executeSBCAbsolute() {
         let s = System(cpu: CPU6502())
         for registerOperand in Int8.min...Int8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 for borrowOperand in [false, true] {
                     s.cpu = CPU6502(ac: UInt8(bitPattern: registerOperand), sr: borrowOperand ? 0x00 : CPU6502.srCMask)
                     let memoryOperand = Int8(bitPattern: s.cpu.load(absolute: address))
@@ -241,7 +241,7 @@ struct CPU6502ArithmeticInstructionTests {
     @Test func executeSBCAbsoluteX() {
         let s = System(cpu: CPU6502())
         for registerOperand in Int8.min...Int8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 for borrowOperand in [false, true] {
                     s.cpu = CPU6502(ac: UInt8(bitPattern: registerOperand), xr: 0x63, sr: borrowOperand ? 0x00 : CPU6502.srCMask)
                     let memoryOperand = Int8(bitPattern: s.cpu.load(absoluteX: address))
@@ -257,7 +257,7 @@ struct CPU6502ArithmeticInstructionTests {
     @Test func executeSBCAbsoluteY() {
         let s = System(cpu: CPU6502())
         for registerOperand in Int8.min...Int8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in MemoryTestAddresses {
                 for borrowOperand in [false, true] {
                     s.cpu = CPU6502(ac: UInt8(bitPattern: registerOperand), yr: 0x74, sr: borrowOperand ? 0x00 : CPU6502.srCMask)
                     let memoryOperand = Int8(bitPattern: s.cpu.load(absoluteY: address))
@@ -273,7 +273,7 @@ struct CPU6502ArithmeticInstructionTests {
     @Test func executeSBCIndirectX() {
         let s = System(cpu: CPU6502())
         for registerOperand in Int8.min...Int8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in UInt8.min...UInt8.max {
                 for borrowOperand in [false, true] {
                     s.cpu = CPU6502(ac: UInt8(bitPattern: registerOperand), xr: 0x63, sr: borrowOperand ? 0x00 : CPU6502.srCMask)
                     let memoryOperand = Int8(bitPattern: s.cpu.load(preIndirectX: address))
@@ -289,7 +289,7 @@ struct CPU6502ArithmeticInstructionTests {
     @Test func executeSBCIndirectY() {
         let s = System(cpu: CPU6502())
         for registerOperand in Int8.min...Int8.max {
-            for address in UInt16.min...UInt16(0x0123) {
+            for address in UInt8.min...UInt8.max {
                 for borrowOperand in [false, true] {
                     s.cpu = CPU6502(ac: UInt8(bitPattern: registerOperand), yr: 0x74, sr: borrowOperand ? 0x00 : CPU6502.srCMask)
                     let memoryOperand = Int8(bitPattern: s.cpu.load(postIndirectY: address))

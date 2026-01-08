@@ -40,27 +40,43 @@ struct CPU6502StackInstructionTests {
         #expect(s.cpu.load(stackpage: 0xEA) == 0xAA)
     }
     
+    func expectedStatus(_ result: UInt8) -> UInt8 {
+        let negative = result & 0x80 != 0
+        let zero = result == 0
+        var status = UInt8.min
+        status = negative ? (status | CPU6502.srNMask) : (status & ~CPU6502.srNMask)
+        status = zero ? (status | CPU6502.srZMask) : (status & ~CPU6502.srZMask)
+        return status
+    }
+    
     @Test func executePLA() {
         let s = System(cpu: CPU6502(sp: 0xEA))
+        let expectedResult = s.cpu.load(stackpage: 0xEA &+ 1)
+        let expectedStatus = expectedStatus(expectedResult)
         s.cpu.executePLA()
-        #expect(s.cpu == CPU6502(ac: s.cpu.load(stackpage: 0xEA &+ 1), sp: 0xEA &+ 1))
+        #expect(s.cpu == CPU6502(ac: expectedResult, sr: expectedStatus, sp: 0xEA &+ 1))
     }
     
     @Test func executePLP() {
         let s = System(cpu: CPU6502(sp: 0xEA))
+        let expectedResult = s.cpu.load(stackpage: 0xEA &+ 1)
         s.cpu.executePLP()
-        #expect(s.cpu == CPU6502(sr: s.cpu.load(stackpage: 0xEA &+ 1), sp: 0xEA &+ 1))
+        #expect(s.cpu == CPU6502(sr: expectedResult, sp: 0xEA &+ 1))
     }
     
     @Test func executePLX() {
         let s = System(cpu: CPU6502(sp: 0xEA))
-        s.cpu.executePLX()
-        #expect(s.cpu == CPU6502(xr: s.cpu.load(stackpage: 0xEA &+ 1), sp: 0xEA &+ 1))
+        let expectedResult = s.cpu.load(stackpage: 0xEA &+ 1)
+        let expectedStatus = expectedStatus(expectedResult)
+         s.cpu.executePLX()
+        #expect(s.cpu == CPU6502(xr: expectedResult, sr: expectedStatus, sp: 0xEA &+ 1))
     }
     
     @Test func executePLY() {
         let s = System(cpu: CPU6502(sp: 0xEA))
+        let expectedResult = s.cpu.load(stackpage: 0xEA &+ 1)
+        let expectedStatus = expectedStatus(expectedResult)
         s.cpu.executePLY()
-        #expect(s.cpu == CPU6502(yr: s.cpu.load(stackpage: 0xEA &+ 1), sp: 0xEA &+ 1))
+        #expect(s.cpu == CPU6502(yr: expectedResult, sr: expectedStatus, sp: 0xEA &+ 1))
     }
 }

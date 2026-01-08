@@ -14,7 +14,7 @@ import Testing
 struct CPU6502BranchInstructionTests {
     func testExecuteBranch(_ execution: (System, UInt8) -> (), _ condition: (System) -> Bool) {
         let s = System(cpu: CPU6502())
-        for counterOperand in UInt16.min...UInt16(0x0123) {
+        for counterOperand in MemoryTestAddresses {
             for relativeOperand in UInt8.min...UInt8.max {
                 s.cpu = CPU6502(pc: counterOperand)
                 let expectedCounter = !condition(s) ?

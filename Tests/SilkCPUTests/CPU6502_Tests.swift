@@ -60,7 +60,7 @@ struct CPU6502Tests {
         s.cpu.execute()
         #expect(s.cpu == CPU6502(pc: 0x0000, ac: 0x00, xr: 0x00, yr: 0x00, sr: 0x00, sp: 0xFF))
         s.cpu.execute()
-        #expect(s.cpu == CPU6502(pc: 0x0002, ac: 0xAA, xr: 0x00, yr: 0x00, sr: 0x00, sp: 0xFF))
+        #expect(s.cpu == CPU6502(pc: 0x0002, ac: 0xAA, xr: 0x00, yr: 0x00, sr: 0x80, sp: 0xFF))
         s.cpu.execute()
         #expect(s.cpu == CPU6502(pc: 0x0004, ac: 0xCB, xr: 0x00, yr: 0x00, sr: 0x80, sp: 0xFF))
         s.cpu.execute()

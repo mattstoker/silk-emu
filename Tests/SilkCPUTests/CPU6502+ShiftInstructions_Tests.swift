@@ -62,7 +62,7 @@ struct CPU6502ShiftInstructionTests {
     
     @Test func executeASLAbsolute() {
         let s = System(cpu: CPU6502())
-        for address in UInt16.min...UInt16(0x0123) {
+        for address in MemoryTestAddresses {
             s.cpu = CPU6502()
             let memoryOperand = s.cpu.load(absolute: address)
             let expectedResult = memoryOperand << 1
@@ -75,7 +75,7 @@ struct CPU6502ShiftInstructionTests {
     
     @Test func executeASLAbsoluteX() {
         let s = System(cpu: CPU6502())
-        for address in UInt16.min...UInt16(0x0123) {
+        for address in MemoryTestAddresses {
             s.cpu = CPU6502(xr: 0x3B)
             let memoryOperand = s.cpu.load(absoluteX: address)
             let expectedResult = memoryOperand << 1
@@ -126,7 +126,7 @@ struct CPU6502ShiftInstructionTests {
     
     @Test func executeLSRAbsolute() {
         let s = System(cpu: CPU6502())
-        for address in UInt16.min...UInt16(0x0123) {
+        for address in MemoryTestAddresses {
             s.cpu = CPU6502()
             let memoryOperand = s.cpu.load(absolute: address)
             let expectedResult = memoryOperand >> 1
@@ -139,7 +139,7 @@ struct CPU6502ShiftInstructionTests {
     
     @Test func executeLSRAbsoluteX() {
         let s = System(cpu: CPU6502())
-        for address in UInt16.min...UInt16(0x0123) {
+        for address in MemoryTestAddresses {
             s.cpu = CPU6502(xr: 0x3B)
             let memoryOperand = s.cpu.load(absoluteX: address)
             let expectedResult = memoryOperand >> 1
@@ -194,7 +194,7 @@ struct CPU6502ShiftInstructionTests {
     @Test func executeROLAbsolute() {
         let carryOperand = Bool.random()
         let s = System(cpu: CPU6502())
-        for address in UInt16.min...UInt16(0x0123) {
+        for address in MemoryTestAddresses {
             s.cpu = CPU6502(sr: carryOperand ? CPU6502.srCMask : 0x00)
             let memoryOperand = s.cpu.load(absolute: address)
             let expectedResult = memoryOperand << 1 | (carryOperand ? 0x01 : 0x00)
@@ -208,7 +208,7 @@ struct CPU6502ShiftInstructionTests {
     @Test func executeROLAbsoluteX() {
         let carryOperand = Bool.random()
         let s = System(cpu: CPU6502())
-        for address in UInt16.min...UInt16(0x0123) {
+        for address in MemoryTestAddresses {
             s.cpu = CPU6502(xr: 0x3B, sr: carryOperand ? CPU6502.srCMask : 0x00)
             let memoryOperand = s.cpu.load(absoluteX: address)
             let expectedResult = memoryOperand << 1 | (carryOperand ? 0x01 : 0x00)
@@ -263,7 +263,7 @@ struct CPU6502ShiftInstructionTests {
     @Test func executeRORAbsolute() {
         let carryOperand = Bool.random()
         let s = System(cpu: CPU6502())
-        for address in UInt16.min...UInt16(0x0123) {
+        for address in MemoryTestAddresses {
             s.cpu = CPU6502(sr: carryOperand ? CPU6502.srCMask : 0x00)
             let memoryOperand = s.cpu.load(absolute: address)
             let expectedResult = memoryOperand >> 1 | (carryOperand ? 0x80 : 0x00)
@@ -277,7 +277,7 @@ struct CPU6502ShiftInstructionTests {
     @Test func executeRORAbsoluteX() {
         let carryOperand = Bool.random()
         let s = System(cpu: CPU6502())
-        for address in UInt16.min...UInt16(0x0123) {
+        for address in MemoryTestAddresses {
             s.cpu = CPU6502(xr: 0x3B, sr: carryOperand ? CPU6502.srCMask : 0x00)
             let memoryOperand = s.cpu.load(absoluteX: address)
             let expectedResult = memoryOperand >> 1 | (carryOperand ? 0x80 : 0x00)

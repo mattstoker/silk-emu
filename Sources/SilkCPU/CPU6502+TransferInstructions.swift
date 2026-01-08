@@ -25,34 +25,42 @@
 extension CPU6502 {
     mutating func executeLDA(immediate oper: UInt8) {
         ac = oper
+        sr = CPU6502.flags(sr, value: ac)
     }
     
     mutating func executeLDA(zeropage oper: UInt8) {
         ac = load(zeropage: oper)
+        sr = CPU6502.flags(sr, value: ac)
     }
     
     mutating func executeLDA(zeropageX oper: UInt8) {
         ac = load(zeropageX: oper)
+        sr = CPU6502.flags(sr, value: ac)
     }
     
     mutating func executeLDA(absolute oper: UInt16) {
         ac = load(absolute: oper)
+        sr = CPU6502.flags(sr, value: ac)
     }
     
     mutating func executeLDA(absoluteX oper: UInt16) {
         ac = load(absoluteX: oper)
+        sr = CPU6502.flags(sr, value: ac)
     }
     
     mutating func executeLDA(absoluteY oper: UInt16) {
         ac = load(absoluteY: oper)
+        sr = CPU6502.flags(sr, value: ac)
     }
     
     mutating func executeLDA(preIndirectX oper: UInt8) {
         ac = load(preIndirectX: oper)
+        sr = CPU6502.flags(sr, value: ac)
     }
     
     mutating func executeLDA(postIndirectY oper: UInt8) {
         ac = load(postIndirectY: oper)
+        sr = CPU6502.flags(sr, value: ac)
     }
 }
 
@@ -67,6 +75,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeLDA(zeropageIndirect oper: UInt8) {
         ac = load(zeropageIndirect: oper)
+        sr = CPU6502.flags(sr, value: ac)
     }
 }
 
@@ -85,22 +94,27 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeLDX(immediate oper: UInt8) {
         xr = oper
+        sr = CPU6502.flags(sr, value: xr)
     }
     
     mutating func executeLDX(zeropage oper: UInt8) {
         xr = load(zeropage: oper)
+        sr = CPU6502.flags(sr, value: xr)
     }
     
     mutating func executeLDX(zeropageY oper: UInt8) {
         xr = load(zeropageY: oper)
+        sr = CPU6502.flags(sr, value: xr)
     }
     
     mutating func executeLDX(absolute oper: UInt16) {
         xr = load(absolute: oper)
+        sr = CPU6502.flags(sr, value: xr)
     }
     
     mutating func executeLDX(absoluteY oper: UInt16) {
         xr = load(absoluteY: oper)
+        sr = CPU6502.flags(sr, value: xr)
     }
 }
 
@@ -119,22 +133,27 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeLDY(immediate oper: UInt8) {
         yr = oper
+        sr = CPU6502.flags(sr, value: yr)
     }
     
     mutating func executeLDY(zeropage oper: UInt8) {
         yr = load(zeropage: oper)
+        sr = CPU6502.flags(sr, value: yr)
     }
     
     mutating func executeLDY(zeropageX oper: UInt8) {
         yr = load(zeropageX: oper)
+        sr = CPU6502.flags(sr, value: yr)
     }
     
     mutating func executeLDY(absolute oper: UInt16) {
         yr = load(absolute: oper)
+        sr = CPU6502.flags(sr, value: yr)
     }
     
     mutating func executeLDY(absoluteX oper: UInt16) {
         yr = load(absoluteX: oper)
+        sr = CPU6502.flags(sr, value: yr)
     }
 }
 
@@ -288,6 +307,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeTAX() {
         xr = ac
+        sr = CPU6502.flags(sr, value: xr)
     }
 }
 
@@ -302,6 +322,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeTXA() {
         ac = xr
+        sr = CPU6502.flags(sr, value: ac)
     }
 }
 
@@ -316,6 +337,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeTAY() {
         yr = ac
+        sr = CPU6502.flags(sr, value: yr)
     }
 }
 
@@ -330,6 +352,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeTYA() {
         ac = yr
+        sr = CPU6502.flags(sr, value: ac)
     }
 }
 
@@ -344,6 +367,7 @@ extension CPU6502 {
 extension CPU6502 {
     mutating func executeTSX() {
         xr = sp
+        sr = CPU6502.flags(sr, value: xr)
     }
 }
 

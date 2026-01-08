@@ -27,8 +27,8 @@ public struct CPU6502 {
     public internal(set) var sr: UInt8
     public internal(set) var sp: UInt8
     public internal(set) var state: State
-    public internal(set) var load: (UInt16) -> UInt8 = { address in return 0xEA }
-    public internal(set) var store: (UInt16, UInt8) -> () = { address, value in return }
+    public internal(set) var load: (UInt16) -> UInt8
+    public internal(set) var store: (UInt16, UInt8) -> ()
 
     public init(
         pc: UInt16 = 0x00,
@@ -38,8 +38,8 @@ public struct CPU6502 {
         sr: UInt8 = 0x00,
         sp: UInt8 = 0x00,
         state: State = .boot,
-        load: @escaping (UInt16) -> UInt8,
-        store: @escaping (UInt16, UInt8) -> ()
+        load: @escaping (UInt16) -> UInt8 = { address in return 0xEA },
+        store: @escaping (UInt16, UInt8) -> () = { address, value in return }
     ) {
         self.pc = pc
         self.ac = ac
@@ -103,14 +103,62 @@ extension CPU6502: CustomDebugStringConvertible {
 // MARK: Status Register Bits
 
 extension CPU6502 {
-    static let srNMask: UInt8 = 0b10000000
-    static let srVMask: UInt8 = 0b01000000
-    static let srXMask: UInt8 = 0b00100000
-    static let srBMask: UInt8 = 0b00010000
-    static let srDMask: UInt8 = 0b00001000
-    static let srIMask: UInt8 = 0b00000100
-    static let srZMask: UInt8 = 0b00000010
     static let srCMask: UInt8 = 0b00000001
+    static let srZMask: UInt8 = 0b00000010
+    static let srIMask: UInt8 = 0b00000100
+    static let srDMask: UInt8 = 0b00001000
+    static let srBMask: UInt8 = 0b00010000
+    static let srXMask: UInt8 = 0b00100000
+    static let srVMask: UInt8 = 0b01000000
+    static let srNMask: UInt8 = 0b10000000
+}
+
+// MARK: Status Flag Logic
+extension CPU6502 {
+    static func flags(
+        _ status: UInt8,
+        carry: Bool? = nil,
+        zero: Bool? = nil,
+        interrupt: Bool? = nil,
+        decimal: Bool? = nil,
+        break: Bool? = nil,
+        ignored: Bool? = nil,
+        overflow: Bool? = nil,
+        negative: Bool? = nil
+    ) -> UInt8 {
+        var status = status
+        if let carry = carry {
+            status = carry ? (status | CPU6502.srCMask) : (status & ~CPU6502.srCMask)
+        }
+        if let zero = zero {
+            status = zero ? (status | CPU6502.srZMask) : (status & ~CPU6502.srZMask)
+        }
+        if let interrupt = interrupt {
+            status = interrupt ? (status | CPU6502.srIMask) : (status & ~CPU6502.srIMask)
+        }
+        if let decimal = decimal {
+            status = decimal ? (status | CPU6502.srDMask) : (status & ~CPU6502.srDMask)
+        }
+        if let `break` = `break` {
+            status = `break` ? (status | CPU6502.srBMask) : (status & ~CPU6502.srBMask)
+        }
+        if let ignored = ignored {
+            status = ignored ? (status | CPU6502.srXMask) : (status & ~CPU6502.srXMask)
+        }
+        if let overflow = overflow {
+            status = overflow ? (status | CPU6502.srVMask) : (status & ~CPU6502.srVMask)
+        }
+        if let negative = negative {
+            status = negative ? (status | CPU6502.srNMask) : (status & ~CPU6502.srNMask)
+        }
+        return status
+    }
+    
+    static func flags(_ status: UInt8, value: UInt8, carry: Bool? = nil, overflow: Bool? = nil) -> UInt8 {
+        let negative = value & 0x80 != 0
+        let zero = value == 0
+        return flags(status, carry: carry, zero: zero, overflow: overflow, negative: negative)
+    }
 }
 
 // MARK: Arithmetic Logic
@@ -128,65 +176,39 @@ extension CPU6502 {
     
     static func left(_ a: UInt8, status: UInt8) -> (result: UInt8, status: UInt8) {
         let result = a << 1 | (status & CPU6502.srCMask != 0 ? 0x01 : 0x00)
-        let negative = result & 0x80 != 0
-        let zero = result == 0
-        let carry = a & 0x80 != 0
-        var status = status
-        status = negative ? (status | CPU6502.srNMask) : (status & ~CPU6502.srNMask)
-        status = zero ? (status | CPU6502.srZMask) : (status & ~CPU6502.srZMask)
-        status = carry ? (status | CPU6502.srCMask) : (status & ~CPU6502.srCMask)
+        let status = flags(status, value: result, carry: a & 0x80 != 0)
         return (result: result, status: status)
     }
     
     static func right(_ a: UInt8, status: UInt8) -> (result: UInt8, status: UInt8) {
         let result = a >> 1 | (status & CPU6502.srCMask != 0 ? 0x80 : 0x00)
-        let negative = result & 0x80 != 0
-        let zero = result == 0
-        let carry = a & 0x01 != 0
-        var status = status
-        status = negative ? (status | CPU6502.srNMask) : (status & ~CPU6502.srNMask)
-        status = zero ? (status | CPU6502.srZMask) : (status & ~CPU6502.srZMask)
-        status = carry ? (status | CPU6502.srCMask) : (status & ~CPU6502.srCMask)
+        let status = flags(status, value: result, carry: a & 0x01 != 0)
         return (result: result, status: status)
     }
     
     static func and(_ a: UInt8, _ b: UInt8, status: UInt8) -> (result: UInt8, status: UInt8) {
         let result = a & b
-        let negative = result & 0x80 != 0
-        let zero = result == 0
-        var status = status
-        status = negative ? (status | CPU6502.srNMask) : (status & ~CPU6502.srNMask)
-        status = zero ? (status | CPU6502.srZMask) : (status & ~CPU6502.srZMask)
+        let status = flags(status, value: result)
         return (result: result, status: status)
     }
     
     static func or(_ a: UInt8, _ b: UInt8, status: UInt8) -> (result: UInt8, status: UInt8) {
         let result = a | b
-        let negative = result & 0x80 != 0
-        let zero = result == 0
-        var status = status
-        status = negative ? (status | CPU6502.srNMask) : (status & ~CPU6502.srNMask)
-        status = zero ? (status | CPU6502.srZMask) : (status & ~CPU6502.srZMask)
+        let status = flags(status, value: result)
         return (result: result, status: status)
     }
     
     static func xor(_ a: UInt8, _ b: UInt8, status: UInt8) -> (result: UInt8, status: UInt8) {
         let result = a ^ b
-        let negative = result & 0x80 != 0
-        let zero = result == 0
-        var status = status
-        status = negative ? (status | CPU6502.srNMask) : (status & ~CPU6502.srNMask)
-        status = zero ? (status | CPU6502.srZMask) : (status & ~CPU6502.srZMask)
+        let status = flags(status, value: result)
         return (result: result, status: status)
     }
     
     static func bit(_ a: UInt8, _ b: UInt8, status: UInt8) -> (result: UInt8, status: UInt8) {
         let result = a & b
-        let zero = result == 0
         let signBitSet = a & 0b10000000 != 0
         let semsBitSet = a & 0b01000000 != 0
-        var status = status
-        status = zero ? (status | CPU6502.srZMask) : (status & ~CPU6502.srZMask)
+        var status = flags(status, value: result)
         status = signBitSet ? (status | 0b10000000) : (status & ~0b10000000)
         status = semsBitSet ? (status | 0b01000000) : (status & ~0b01000000)
         return (result: result, status: status)
@@ -195,15 +217,7 @@ extension CPU6502 {
     static func add(_ a: UInt8, _ b: UInt8, status: UInt8) -> (result: UInt8, status: UInt8) {
         let sum = UInt16(a) + UInt16(b) + (status & CPU6502.srCMask == 0 ? 0 : 1)
         let result = UInt8(sum & 0xFF)
-        let negative = result & 0x80 != 0
-        let zero = result == 0
-        let carry = result != sum
-        let overflow = (a & 0x80) != (b & 0x80) ? false : (result & 0x80) != (a & 0x80)
-        var status = status
-        status = negative ? (status | CPU6502.srNMask) : (status & ~CPU6502.srNMask)
-        status = zero ? (status | CPU6502.srZMask) : (status & ~CPU6502.srZMask)
-        status = carry ? (status | CPU6502.srCMask) : (status & ~CPU6502.srCMask)
-        status = overflow ? (status | CPU6502.srVMask) : (status & ~CPU6502.srVMask)
+        let status = flags(status, value: result, carry: result != sum, overflow: (a & 0x80) != (b & 0x80) ? false : (result & 0x80) != (a & 0x80))
         return (result: result, status: status)
     }
     
