@@ -12,26 +12,64 @@ import Testing
 struct LCDHD44780Tests {
     @Test func initializer() {
         let lcd = LCDHD44780()
-        #expect(lcd.ir == 0x00)
-        #expect(lcd.dr == 0x00)
-        #expect(lcd.ac == 0x00)
+        #expect(lcd == LCDHD44780(
+            ir: 0x00,
+            dr: 0x00,
+            ac: 0x00,
+            id: true,
+            s: false,
+            d: false,
+            c: false,
+            b: false,
+            sc: false,
+            rl: false,
+            dl: true,
+            n: false,
+            f: false,
+            busy: false,
+            cursor: 0x00,
+            shift: 0x00,
+            ddram: Array(repeating: 0x20, count: 80),
+            cgram: Array(repeating: 0x00, count: 64)
+        ))
+    }
+    
+    @Test func execute() {
+        var lcd = LCDHD44780()
+        var data = UInt8(0)
         
-        #expect(lcd.id == true)
-        #expect(lcd.s == false)
-        #expect(lcd.d == false)
-        #expect(lcd.c == false)
-        #expect(lcd.b == false)
-        #expect(lcd.sc == false)
-        #expect(lcd.rl == false)
-        #expect(lcd.dl == true)
-        #expect(lcd.n == false)
-        #expect(lcd.f == false)
-        #expect(lcd.busy == false)
+        // Set 8-bit mode; 2-line display; 5x8 font
+        data = UInt8(0b00111000)
+        lcd = LCDHD44780()
+        lcd.execute(rs: false, rw: false, data: &data)
+        #expect(lcd == LCDHD44780(dl: true, n: true, f: false))
         
-        #expect(lcd.cursor == 0x00)
-        #expect(lcd.shift == 0x00)
+        // Display on; cursor on; blink off
+        data = UInt8(0b00001110)
+        lcd = LCDHD44780()
+        lcd.execute(rs: false, rw: false, data: &data)
+        #expect(lcd == LCDHD44780(d: true, c: true, b: false))
         
-        #expect(lcd.ddram == Array(repeating: 0x20, count: 80))
-        #expect(lcd.cgram == Array(repeating: 0x00, count: 64))
+        // Increment and shift cursor; don't shift display
+        data = UInt8(0b00000110)
+        lcd = LCDHD44780()
+        lcd.execute(rs: false, rw: false, data: &data)
+        #expect(lcd == LCDHD44780(id: true, s: false))
+        
+        // Set DDRAM address then write
+        // TODO: Test wrap-around of address
+        let ddramAddress = UInt8(0b00101010)
+        data = UInt8(0b10000000) | ddramAddress
+        lcd = LCDHD44780()
+        lcd.execute(rs: false, rw: false, data: &data)
+        #expect(lcd == LCDHD44780(ac: UInt8(0b10000000) | ddramAddress))
+        let character = UInt8(0b11010101)
+        data = character
+        let expectedAC = UInt8(0b10000000) | (ddramAddress &+ 1)
+        let expectedDDRAM = { var ddram = lcd.ddram; ddram[Int(ddramAddress)] = character; return ddram }()
+        lcd.execute(rs: true, rw: false, data: &data)
+        #expect(lcd == LCDHD44780(ac: expectedAC, ddram: expectedDDRAM))
+        
+        // TODO: Test display shift, cursor off, 4-bit mode, decrement mode, other configurations
     }
 }

@@ -33,25 +33,50 @@ public struct LCDHD44780: Hashable {
     public internal(set) var cgram: [UInt8]
 //    public let cgrom: [UInt8]
     
-    public init() {
-        ir = 0x00
-        dr = 0x00
-        ac = 0x00
-        id = true
-        s = false
-        d = false
-        c = false
-        b = false
-        sc = false
-        rl = false
-        dl = true
-        n = false
-        f = false
-        busy = false
-        cursor = 0x00
-        shift = 0x00
-        ddram = Array(repeating: 0x20, count: Self.ddramSize)
-        cgram = Array(repeating: 0x00, count: Self.cgramSize)
+    public init(
+        ir: UInt8 = 0x00,
+        dr: UInt8 = 0x00,
+        ac: UInt8 = 0x00,
+        id: Bool = true,
+        s: Bool = false,
+        d: Bool = false,
+        c: Bool = false,
+        b: Bool = false,
+        sc: Bool = false,
+        rl: Bool = false,
+        dl: Bool = true,
+        n: Bool = false,
+        f: Bool = false,
+        busy: Bool = false,
+        cursor: UInt8 = 0x00,
+        shift: UInt8 = 0x00,
+        ddram: [UInt8] = Array(repeating: 0x20, count: Self.ddramSize),
+        cgram: [UInt8] = Array(repeating: 0x00, count: Self.cgramSize)
+    ) {
+        self.ir = ir
+        self.dr = dr
+        self.ac = ac
+        self.id = id
+        self.s = s
+        self.d = d
+        self.c = c
+        self.b = b
+        self.sc = sc
+        self.rl = rl
+        self.dl = dl
+        self.n = n
+        self.f = f
+        self.busy = busy
+        self.cursor = cursor
+        self.shift = shift
+        self.ddram = Array(repeating: 0x20, count: Self.ddramSize)
+        for i in 0..<min(self.ddram.count, ddram.count) {
+            self.ddram[i] = ddram[i]
+        }
+        self.cgram = Array(repeating: 0x00, count: Self.cgramSize)
+        for i in 0..<min(self.cgram.count, ddram.count) {
+            self.cgram[i] = cgram[i]
+        }
     }
 }
 
@@ -100,7 +125,7 @@ extension LCDHD44780 {
     }
     
     mutating func executeDDRAMAddressSet(address: UInt8) {
-        ac = 0b1000000 | address
+        ac = 0b10000000 | address
     }
     
     func executeReadBusyFlagAndCounter() -> UInt8 {
@@ -110,8 +135,10 @@ extension LCDHD44780 {
     mutating func executeWriteRAM(data: UInt8) {
         if ac & 0b10000000 == 0 {
             cgram[Int(ac & 0b00111111)] = data
+            ac = (id ? (ac &+ 1) : (ac &- 1)) & 0b01111111 | 0b01000000
         } else {
             ddram[Int(ac & 0b01111111)] = data
+            ac = (id ? (ac &+ 1) : (ac &- 1)) | 0b10000000
         }
     }
     
@@ -126,35 +153,35 @@ extension LCDHD44780 {
     mutating func execute(rs: Bool, rw: Bool, data: inout UInt8) {
         switch (rs, rw) {
         case (false, false):
-            if data & 0b00000001 != 0 {
+            if data & 0b11111111 == 0b00000001 {
                 executeClearDisplay()
             }
-            else if data & 0b00000010 != 0 {
+            else if data & 0b11111110 == 0b00000010 {
                 executeCursorHome()
             }
-            else if data & 0b00000100 != 0 {
+            else if data & 0b11111100 == 0b00000100 {
                 let directionIncrement = data & 0b00000010 != 0
                 let shift = data & 0b00000001 != 0
                 executeEntryModeSet(directionIncrement: directionIncrement, shift: shift)
             }
-            else if data & 0b00001000 != 0 {
+            else if data & 0b11111000 == 0b00001000 {
                 let displayOn = data & 0b00000100 != 0
                 let cursorOn = data & 0b00000010 != 0
                 let blinkOn = data & 0b00000001 != 0
                 executeDisplaySet(displayOn: displayOn, cursorOn: cursorOn, blinkOn: blinkOn)
             }
-            else if data & 0b00010000 != 0 {
-                let displayShift = 0b00001000 != 0
-                let directionRight = 0b00000100 != 0
+            else if data & 0b11110000 == 0b00010000 {
+                let displayShift = data & 0b00001000 != 0
+                let directionRight = data & 0b00000100 != 0
                 executeCursorMove(displayShift: displayShift, directionRight: directionRight)
             }
-            else if data & 0b00100000 != 0 {
-                let dataLength8 = 0b00010000 != 0
-                let lineCountTwo = 0b00001000 != 0
-                let font5x10 = 0b00000100 != 0
+            else if data & 0b11100000 == 0b00100000 {
+                let dataLength8 = data & 0b00010000 != 0
+                let lineCountTwo = data & 0b00001000 != 0
+                let font5x10 = data & 0b00000100 != 0
                 executeFunctionSet(dataLength8: dataLength8, lineCountTwo: lineCountTwo, font5x10: font5x10)
             }
-            else if data & 0b01000000 != 0 {
+            else if data & 0b11000000 == 0b01000000 {
                 executeCGRAMAddressSet(address: data)
             }
             else {
