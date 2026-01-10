@@ -7,6 +7,7 @@ let package = Package(
     products: [
         .library(name: "SilkCPU", targets: ["SilkCPU"]),
         .library(name: "SilkVIA", targets: ["SilkVIA"]),
+        .library(name: "SilkLCD", targets: ["SilkLCD"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
@@ -33,6 +34,13 @@ let package = Package(
             name: "SilkVIATests",
             dependencies: [
                 .target(name: "SilkVIA"),
+            ]
+        ),
+        .target(name: "SilkLCD"),
+        .testTarget(
+            name: "SilkLCDTests",
+            dependencies: [
+                .target(name: "SilkLCD"),
             ]
         )
     ]
