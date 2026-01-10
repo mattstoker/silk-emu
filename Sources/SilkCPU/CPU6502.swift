@@ -10,7 +10,7 @@
 
 import Foundation
 
-// MARK: CPU State & Equality
+// MARK: - CPU State & Equality
 
 public struct CPU6502 {
     public enum State {
@@ -76,7 +76,7 @@ extension CPU6502: Hashable {
     }
 }
 
-// MARK: Description
+// MARK: - Description
 
 extension CPU6502: CustomDebugStringConvertible {
     public var debugDescription: String {
@@ -100,7 +100,7 @@ extension CPU6502: CustomDebugStringConvertible {
     }
 }
 
-// MARK: Status Register Bits
+// MARK: - Status Register Bits
 
 extension CPU6502 {
     static let srCMask: UInt8 = 0b00000001
@@ -113,7 +113,8 @@ extension CPU6502 {
     static let srNMask: UInt8 = 0b10000000
 }
 
-// MARK: Status Flag Logic
+// MARK: - Status Flag Logic
+
 extension CPU6502 {
     static func flags(
         _ status: UInt8,
@@ -161,7 +162,7 @@ extension CPU6502 {
     }
 }
 
-// MARK: Arithmetic Logic
+// MARK: - Arithmetic Logic
 
 extension CPU6502 {
     static func increment(_ a: UInt8, status: UInt8) -> (result: UInt8, status: UInt8) {
@@ -226,7 +227,7 @@ extension CPU6502 {
     }
 }
 
-// MARK: Memory Addressing
+// MARK: - Memory Addressing
 
 extension CPU6502 {
     static let zeropage: UInt8 = 0x00
@@ -302,7 +303,7 @@ extension CPU6502 {
     }
 }
 
-// MARK: Load & Store
+// MARK: - Load & Store
 
 extension CPU6502 {
     func load(zeropage oper: UInt8) -> UInt8 {
@@ -440,7 +441,7 @@ extension CPU6502 {
     }
 }
 
-// MARK: Push & Pull
+// MARK: - Push & Pull
 
 extension CPU6502 {
     mutating func push(_ oper: UInt8) {
@@ -467,7 +468,7 @@ extension CPU6502 {
     }
 }
 
-// MARK: NOP Instruction
+// MARK: - NOP Instruction
 
 // NOP
 // No Operation
@@ -483,7 +484,7 @@ extension CPU6502 {
     }
 }
 
-// MARK: Program Execution
+// MARK: - Program Execution
 
 extension CPU6502 {
     enum Instruction: UInt8 {
@@ -1275,7 +1276,7 @@ extension CPU6502 {
     }
 }
 
-// MARK: Conveniences
+// MARK: - Conveniences
 
 extension UInt16 {
     init(high: UInt8, low: UInt8) {
