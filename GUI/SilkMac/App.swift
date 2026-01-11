@@ -7,6 +7,8 @@
 
 import SwiftUI
 import SilkCPU
+import SilkVIA
+import SilkLCD
 
 // MARK: - App
 
@@ -25,6 +27,9 @@ struct ContentView: View {
     @State var programImporterShowing = false
     @State var programFile: URL?
     @State var programOffset: Int = 0xE000 // TODO: UI
+    @State var showVIAState: Bool = true
+    @State var showLCDState: Bool = true
+    @State var showControllerState: Bool = true
     @State var showMemory: Bool = false
     @State var showVideo: Bool = true
     @State var videoStart: UInt16? = 0x2000
@@ -158,6 +163,8 @@ struct ContentView: View {
                 // MARK: CPU State
                 
                 VStack {
+                    Text("CPU 6502")
+                        .bold()
                     HStack {
                         Text("PC")
                         Text(String(format: "%04X", system.cpu.pc))
@@ -199,12 +206,183 @@ struct ContentView: View {
                         label: { Text("Reset") }
                     )
                 }
+                Spacer()
+                
+                // MARK: VIA State
+                
+                Toggle("VIA State", isOn: $showVIAState)
+                if showVIAState {
+                    VStack {
+                        Text("VIA 6522")
+                            .bold()
+                        HStack {
+                            Text("PA")
+                            Text(String(format: "%02X", system.via.pa))
+                        }
+                        HStack {
+                            Text("PB")
+                            Text(String(format: "%02X", system.via.pb))
+                        }
+                        HStack {
+                            Text("DDRA")
+                            Text(String(format: "%02X", system.via.ddra))
+                        }
+                        HStack {
+                            Text("DDRB")
+                            Text(String(format: "%02X", system.via.ddrb))
+                        }
+                        HStack {
+                            Text("SR")
+                            Text(String(format: "%02X", system.via.sr))
+                        }
+                        HStack {
+                            Text("ACR")
+                            Text(String(format: "%02X", system.via.acr))
+                        }
+                        HStack {
+                            Text("PCR")
+                            Text(String(format: "%02X", system.via.pcr))
+                        }
+                        HStack {
+                            Text("IFR")
+                            Text(String(format: "%02X", system.via.ifr))
+                        }
+                        HStack {
+                            Text("IER")
+                            Text(String(format: "%02X", system.via.ier))
+                        }
+                        HStack {
+                            Text("T1C")
+                            Text(String(format: "%04X", system.via.t1c))
+                        }
+                        HStack {
+                            Text("T1L")
+                            Text(String(format: "%04X", system.via.t1l))
+                        }
+                        HStack {
+                            Text("T2C")
+                            Text(String(format: "%04X", system.via.t2c))
+                        }
+                        HStack {
+                            Text("T2L")
+                            Text(String(format: "%04X", system.via.t2l))
+                        }
+                    }
+                }
+                Spacer()
+                
+                // MARK: LCD State
+                
+                Toggle("LCD State", isOn: $showLCDState)
+                if showLCDState {
+                    VStack {
+                        Text("LCD HD44780")
+                            .bold()
+                        HStack {
+                            Text("IR")
+                            Text(String(format: "%02X", system.lcd.ir))
+                        }
+                        HStack {
+                            Text("DR")
+                            Text(String(format: "%02X", system.lcd.dr))
+                        }
+                        HStack {
+                            Text("AC")
+                            Text(String(format: "%02X", system.lcd.ac))
+                        }
+                        HStack {
+                            Text("ID")
+                            Text(String(format: "%@", system.lcd.id ? "1" : "0"))
+                        }
+                        HStack {
+                            Text("S")
+                            Text(String(format: "%@", system.lcd.s ? "1" : "0"))
+                        }
+                        HStack {
+                            Text("D")
+                            Text(String(format: "%@", system.lcd.d ? "1" : "0"))
+                        }
+                        HStack {
+                            Text("C")
+                            Text(String(format: "%@", system.lcd.c ? "1" : "0"))
+                        }
+                        HStack {
+                            Text("B")
+                            Text(String(format: "%@", system.lcd.b ? "1" : "0"))
+                        }
+                        HStack {
+                            Text("SC")
+                            Text(String(format: "%@", system.lcd.sc ? "1" : "0"))
+                        }
+                        HStack {
+                            Text("RL")
+                            Text(String(format: "%@", system.lcd.rl ? "1" : "0"))
+                        }
+                        HStack {
+                            Text("DL")
+                            Text(String(format: "%@", system.lcd.dl ? "1" : "0"))
+                        }
+                        HStack {
+                            Text("N")
+                            Text(String(format: "%@", system.lcd.n ? "1" : "0"))
+                        }
+                        HStack {
+                            Text("F")
+                            Text(String(format: "%@", system.lcd.f ? "1" : "0"))
+                        }
+                        HStack {
+                            Text("BUSY")
+                            Text(String(format: "%@", system.lcd.busy ? "1" : "0"))
+                        }
+                        VStack {
+                            let lineLength = 40
+                            let attributes = AttributeContainer()
+                                .foregroundColor(.white)
+                                .backgroundColor(system.lcd.d ? .blue : .clear)
+                                .font(.system(size: 8.0, design: .monospaced))
+                            let line0 = String(system.lcd.ddram[0..<lineLength].map { Character(Unicode.Scalar($0)) })
+                            Text(AttributedString(line0, attributes: attributes))
+                            if system.lcd.n {
+                                let line1 = String(system.lcd.ddram[lineLength..<(lineLength*2)].map { Character(Unicode.Scalar($0)) })
+                                Text(AttributedString(line1, attributes: attributes))
+                            }
+                        }
+                    }
+                }
+                Spacer()
+                
+                Toggle("Controller View", isOn: $showControllerState)
+                if showControllerState {
+                    HStack {
+                        Toggle(
+                            isOn: .init(get: { system.controlPad.leftPressed }, set: { system.controlPad.leftPressed = $0 }),
+                            label: { Text("⬅️") }
+                        ).toggleStyle(.button)
+                        Toggle(
+                            isOn: .init(get: { system.controlPad.rightPressed }, set: { system.controlPad.rightPressed = $0 }),
+                            label: { Text("➡️") }
+                        ).toggleStyle(.button)
+                        Toggle(
+                            isOn: .init(get: { system.controlPad.upPressed }, set: { system.controlPad.upPressed = $0 }),
+                            label: { Text("⬆️") }
+                        ).toggleStyle(.button)
+                        Toggle(
+                            isOn: .init(get: { system.controlPad.downPressed }, set: { system.controlPad.downPressed = $0 }),
+                            label: { Text("⬇️") }
+                        ).toggleStyle(.button)
+                        Toggle(
+                            isOn: .init(get: { system.controlPad.actionPressed }, set: { system.controlPad.actionPressed = $0 }),
+                            label: { Text("⏺️") }
+                        ).toggleStyle(.button)
+                    }
+                }
+                Spacer()
                 
                 // MARK: Memory State
                 
                 Toggle("Memory View", isOn: $showMemory)
                 if showMemory {
-                    Table(system.memory.indices.map { MemoryEntry(address: UInt16($0), value: system.memory[$0]) }) {
+                    Table(system.memory.indices.map { MemoryEntry(address: UInt16($0), value: system.cpu.load(UInt16($0))) }) {
                         TableColumn("Addr") {
                             Text(String(format: "%04X", $0.address))
                         }
@@ -215,9 +393,8 @@ struct ContentView: View {
                         .width(20.0)
                     }
                     .frame(width: 130.0)
-                } else {
-                    Spacer()
                 }
+                Spacer()
             }
             .padding()
         }
@@ -282,10 +459,23 @@ extension FormatStyle where Self == IntegerFormatStyle<Int64> {
     public static var hex: HexFormatter<Int64> { HexFormatter<Int64>() }
 }
 
+// MARK: - ControlPad
+
+struct ControlPad {
+    var leftPressed: Bool = false
+    var rightPressed: Bool = false
+    var upPressed: Bool = false
+    var downPressed: Bool = false
+    var actionPressed: Bool = false
+}
+
 // MARK: - System
 
 class System: ObservableObject {
     @Published var cpu: CPU6502 = CPU6502(load: { _ in 0 }, store: { _, _ in })
+    @Published var via: VIA6522 = VIA6522()
+    @Published var lcd: LCDHD44780 = LCDHD44780()
+    @Published var controlPad: ControlPad = ControlPad()
     @Published var memory: [UInt8] = Array((0x0000...0xFFFF).map { _ in UInt8.min })
     
     init() {
@@ -294,9 +484,51 @@ class System: ObservableObject {
     
     func reset() {
         self.memory = Array((0x0000...0xFFFF).map { _ in UInt8.random(in: 0x00...0xFF) })
+        self.via = VIA6522()
+        self.lcd = LCDHD44780()
+        self.controlPad = ControlPad()
         self.cpu = CPU6502(
-            load: { [weak self] address in return self?.memory[Int(address)] ?? 0xEA },
-            store: { [weak self] address, value in self?.memory[Int(address)] = value }
+            load: { [weak self] address in
+                switch address {
+                case (0x6000...0x7FFF):
+                    let viapa = self?.via.pa ?? 0b00000000
+                    let viapb = self?.via.pb ?? 0b00000000
+                    let lcdrs = (viapa & 0b00100000) != 0
+                    let lcdrw = (viapa & 0b01000000) != 0
+                    let lcde = (viapa & 0b10000000) != 0
+                    var lcddata = viapb
+                    if lcde {
+                        self?.lcd.execute(rs: lcdrs, rw: lcdrw, data: &lcddata)
+                    }
+                    let paIn = UInt8(0) |
+                        ((self?.controlPad.upPressed ?? false) ? 0b00000001 : 0) |
+                        ((self?.controlPad.leftPressed ?? false) ? 0b00000010 : 0) |
+                        ((self?.controlPad.rightPressed ?? false) ? 0b00000100 : 0) |
+                        ((self?.controlPad.downPressed ?? false) ? 0b00001000 : 0) |
+                        ((self?.controlPad.actionPressed ?? false) ? 0b00010000 : 0)
+                    
+                    return self?.via.read(address: UInt8(address & 0x000F), paIn: paIn, pbIn: 0x00) ?? 0xEA
+                default:
+                    return self?.memory[Int(address)] ?? 0xEA
+                }
+            },
+            store: { [weak self] address, value in
+                switch address {
+                case (0x6000...0x7FFF):
+                    self?.via.write(address: UInt8(address & 0x000F), data: value)
+                    let viapa = self?.via.pa ?? 0b00000000
+                    let viapb = self?.via.pb ?? 0b00000000
+                    let lcdrs = (viapa & 0b00100000) != 0
+                    let lcdrw = (viapa & 0b01000000) != 0
+                    let lcde = (viapa & 0b10000000) != 0
+                    var lcddata = viapb
+                    if lcde {
+                        self?.lcd.execute(rs: lcdrs, rw: lcdrw, data: &lcddata)
+                    }
+                default:
+                    self?.memory[Int(address)] = value
+                }
+            }
         )
     }
     

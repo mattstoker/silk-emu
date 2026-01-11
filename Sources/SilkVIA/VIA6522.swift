@@ -53,6 +53,8 @@ public struct VIA6522: Hashable {
     }
 }
 
+// MARK: - Register Addressing
+
 extension VIA6522 {
     public enum Register {
         case PA
@@ -91,6 +93,8 @@ extension VIA6522 {
         }
     }
 }
+
+// MARK: - Read & Write
 
 extension VIA6522 {
     static let uInt8Expansion: [UInt8] = [
@@ -136,9 +140,9 @@ extension VIA6522 {
         return result
     }
     
-    public func read(address: UInt8, data: UInt8 = 0x00) -> UInt8 {
+    public func read(address: UInt8, paIn: UInt8, pbIn: UInt8) -> UInt8 {
         let destination = Self.destination(address: address)
-        return read(from: destination.bits, of: destination.register, given: data)
+        return read(from: destination.bits, of: destination.register, paIn: paIn, pbIn: pbIn)
     }
     
     public mutating func write(address: UInt8, data: UInt8) {
@@ -146,13 +150,13 @@ extension VIA6522 {
         write(into: destination.bits, of: destination.register, given: data)
     }
     
-    public func read(from bits: UInt16, of register: Register, given data: UInt8) -> UInt8 {
+    public func read(from bits: UInt16, of register: Register, paIn: UInt8, pbIn: UInt8) -> UInt8 {
         switch register {
         case .PA:
-            let value = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddra & m) == 0 ? (data & m) : (pa & m) }
+            let value = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddra & m) == 0 ? (paIn & m) : (pa & m) }
             return pack(bits: bits, of: UInt16(value))
         case .PB:
-            let value = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddrb & m) == 0 ? (data & m) : (pb & m) }
+            let value = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddrb & m) == 0 ? (pbIn & m) : (pb & m) }
             return pack(bits: bits, of: UInt16(value))
         case .DDRA: return pack(bits: bits, of: UInt16(ddra))
         case .DDRB: return pack(bits: bits, of: UInt16(ddrb))
@@ -172,10 +176,10 @@ extension VIA6522 {
         switch register {
         case .PA:
             let value = UInt8(unpack(data, into: bits))
-            pa = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddra & m) == 0 ? (value & m) : (pa & m) }
+            pa = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddra & m) != 0 ? (value & m) : (pa & m) }
         case .PB:
             let value = UInt8(unpack(data, into: bits))
-            pb = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddrb & m) == 0 ? (value & m) : (pb & m) }
+            pb = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddrb & m) != 0 ? (value & m) : (pb & m) }
         case .DDRA: ddra = UInt8(unpack(data, into: bits))
         case .DDRB: ddrb = UInt8(unpack(data, into: bits))
         case .SR: sr = UInt8(unpack(data, into: bits))
