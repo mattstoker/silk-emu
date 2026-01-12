@@ -7,6 +7,7 @@ let package = Package(
     products: [
         .library(name: "SilkCPU", targets: ["SilkCPU"]),
         .library(name: "SilkVIA", targets: ["SilkVIA"]),
+        .library(name: "SilkACIA", targets: ["SilkACIA"]),
         .library(name: "SilkLCD", targets: ["SilkLCD"]),
     ],
     dependencies: [
@@ -19,6 +20,8 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .target(name: "SilkCPU"),
                 .target(name: "SilkVIA"),
+                .target(name: "SilkACIA"),
+                .target(name: "SilkLCD"),
             ],
             path: "Sources/SilkEmu"
         ),
@@ -34,6 +37,13 @@ let package = Package(
             name: "SilkVIATests",
             dependencies: [
                 .target(name: "SilkVIA"),
+            ]
+        ),
+        .target(name: "SilkACIA"),
+        .testTarget(
+            name: "SilkACIATests",
+            dependencies: [
+                .target(name: "SilkACIA"),
             ]
         ),
         .target(name: "SilkLCD"),

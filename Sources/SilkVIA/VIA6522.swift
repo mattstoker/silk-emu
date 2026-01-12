@@ -97,6 +97,64 @@ extension VIA6522 {
 // MARK: - Read & Write
 
 extension VIA6522 {
+    public func read(address: UInt8, paIn: UInt8, pbIn: UInt8) -> UInt8 {
+        let destination = Self.destination(address: address)
+        return read(from: destination.bits, of: destination.register, paIn: paIn, pbIn: pbIn)
+    }
+    
+    public mutating func write(address: UInt8, data: UInt8) {
+        let destination = Self.destination(address: address)
+        write(into: destination.bits, of: destination.register, given: data)
+    }
+    
+    func read(from bits: UInt16, of register: Register, paIn: UInt8, pbIn: UInt8) -> UInt8 {
+        switch register {
+        case .PA:
+            let value = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddra & m) == 0 ? (paIn & m) : (pa & m) }
+            return pack(bits: bits, of: UInt16(value))
+        case .PB:
+            let value = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddrb & m) == 0 ? (pbIn & m) : (pb & m) }
+            return pack(bits: bits, of: UInt16(value))
+        case .DDRA: return pack(bits: bits, of: UInt16(ddra))
+        case .DDRB: return pack(bits: bits, of: UInt16(ddrb))
+        case .SR: return pack(bits: bits, of: UInt16(sr))
+        case .ACR: return pack(bits: bits, of: UInt16(acr))
+        case .PCR: return pack(bits: bits, of: UInt16(pcr))
+        case .IFR: return pack(bits: bits, of: UInt16(ifr))
+        case .IER: return pack(bits: bits, of: UInt16(ier))
+        case .T1C: return pack(bits: bits, of: t1c)
+        case .T1L: return pack(bits: bits, of: t1l)
+        case .T2C: return pack(bits: bits, of: t2c)
+        case .T2L: return pack(bits: bits, of: t2l)
+        }
+    }
+    
+    mutating func write(into bits: UInt16, of register: Register, given data: UInt8) {
+        switch register {
+        case .PA:
+            let value = UInt8(unpack(data, into: bits))
+            pa = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddra & m) != 0 ? (value & m) : (pa & m) }
+        case .PB:
+            let value = UInt8(unpack(data, into: bits))
+            pb = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddrb & m) != 0 ? (value & m) : (pb & m) }
+        case .DDRA: ddra = UInt8(unpack(data, into: bits))
+        case .DDRB: ddrb = UInt8(unpack(data, into: bits))
+        case .SR: sr = UInt8(unpack(data, into: bits))
+        case .ACR: acr = UInt8(unpack(data, into: bits))
+        case .PCR: pcr = UInt8(unpack(data, into: bits))
+        case .IFR: ifr = UInt8(unpack(data, into: bits))
+        case .IER: ier = UInt8(unpack(data, into: bits))
+        case .T1C: t1c = unpack(data, into: bits)
+        case .T1L: t1l = unpack(data, into: bits)
+        case .T2C: t2c = unpack(data, into: bits)
+        case .T2L: t2l = unpack(data, into: bits)
+        }
+    }
+}
+
+// MARK: - Data Packing
+
+extension VIA6522 {
     static let uInt8Expansion: [UInt8] = [
         0b00000001,
         0b00000010,
@@ -138,60 +196,6 @@ extension VIA6522 {
             mask = mask << 1
         }
         return result
-    }
-    
-    public func read(address: UInt8, paIn: UInt8, pbIn: UInt8) -> UInt8 {
-        let destination = Self.destination(address: address)
-        return read(from: destination.bits, of: destination.register, paIn: paIn, pbIn: pbIn)
-    }
-    
-    public mutating func write(address: UInt8, data: UInt8) {
-        let destination = Self.destination(address: address)
-        write(into: destination.bits, of: destination.register, given: data)
-    }
-    
-    public func read(from bits: UInt16, of register: Register, paIn: UInt8, pbIn: UInt8) -> UInt8 {
-        switch register {
-        case .PA:
-            let value = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddra & m) == 0 ? (paIn & m) : (pa & m) }
-            return pack(bits: bits, of: UInt16(value))
-        case .PB:
-            let value = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddrb & m) == 0 ? (pbIn & m) : (pb & m) }
-            return pack(bits: bits, of: UInt16(value))
-        case .DDRA: return pack(bits: bits, of: UInt16(ddra))
-        case .DDRB: return pack(bits: bits, of: UInt16(ddrb))
-        case .SR: return pack(bits: bits, of: UInt16(sr))
-        case .ACR: return pack(bits: bits, of: UInt16(acr))
-        case .PCR: return pack(bits: bits, of: UInt16(pcr))
-        case .IFR: return pack(bits: bits, of: UInt16(ifr))
-        case .IER: return pack(bits: bits, of: UInt16(ier))
-        case .T1C: return pack(bits: bits, of: t1c)
-        case .T1L: return pack(bits: bits, of: t1l)
-        case .T2C: return pack(bits: bits, of: t2c)
-        case .T2L: return pack(bits: bits, of: t2l)
-        }
-    }
-    
-    public mutating func write(into bits: UInt16, of register: Register, given data: UInt8) {
-        switch register {
-        case .PA:
-            let value = UInt8(unpack(data, into: bits))
-            pa = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddra & m) != 0 ? (value & m) : (pa & m) }
-        case .PB:
-            let value = UInt8(unpack(data, into: bits))
-            pb = Self.uInt8Expansion.reduce(into: 0) { r, m in r |= (ddrb & m) != 0 ? (value & m) : (pb & m) }
-        case .DDRA: ddra = UInt8(unpack(data, into: bits))
-        case .DDRB: ddrb = UInt8(unpack(data, into: bits))
-        case .SR: sr = UInt8(unpack(data, into: bits))
-        case .ACR: acr = UInt8(unpack(data, into: bits))
-        case .PCR: pcr = UInt8(unpack(data, into: bits))
-        case .IFR: ifr = UInt8(unpack(data, into: bits))
-        case .IER: ier = UInt8(unpack(data, into: bits))
-        case .T1C: t1c = unpack(data, into: bits)
-        case .T1L: t1l = unpack(data, into: bits)
-        case .T2C: t2c = unpack(data, into: bits)
-        case .T2L: t2l = unpack(data, into: bits)
-        }
     }
 }
 

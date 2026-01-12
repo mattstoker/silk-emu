@@ -12,6 +12,7 @@
 		C9A4735E2F12F5830078618F /* SilkVIA in Frameworks */ = {isa = PBXBuildFile; productRef = C9A4735D2F12F5830078618F /* SilkVIA */; };
 		C9A473602F12F5860078618F /* SilkLCD in Frameworks */ = {isa = PBXBuildFile; productRef = C9A4735F2F12F5860078618F /* SilkLCD */; };
 		C9AE8AD12F0B2031003B1AEA /* SilkCPU in Frameworks */ = {isa = PBXBuildFile; productRef = C9AE8AD02F0B2031003B1AEA /* SilkCPU */; };
+		C9B966BD2F14D578000DB5C6 /* SilkACIA in Frameworks */ = {isa = PBXBuildFile; productRef = C9B966BC2F14D578000DB5C6 /* SilkACIA */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C9A473602F12F5860078618F /* SilkLCD in Frameworks */,
+				C9B966BD2F14D578000DB5C6 /* SilkACIA in Frameworks */,
 				C9A4735E2F12F5830078618F /* SilkVIA in Frameworks */,
 				C9AE8AD12F0B2031003B1AEA /* SilkCPU in Frameworks */,
 			);
@@ -81,6 +83,7 @@
 				C9AE8AD02F0B2031003B1AEA /* SilkCPU */,
 				C9A4735D2F12F5830078618F /* SilkVIA */,
 				C9A4735F2F12F5860078618F /* SilkLCD */,
+				C9B966BC2F14D578000DB5C6 /* SilkACIA */,
 			);
 			productName = SilkMac;
 			productReference = C92E695D2F0B16FB00A37EC7 /* SilkMac.app */;
@@ -359,6 +362,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C92E69812F0B1BF800A37EC7 /* XCLocalSwiftPackageReference "../../../SilkEmu" */;
 			productName = SilkCPU;
+		};
+		C9B966BC2F14D578000DB5C6 /* SilkACIA */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C92E69812F0B1BF800A37EC7 /* XCLocalSwiftPackageReference "../../../SilkEmu" */;
+			productName = SilkACIA;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
