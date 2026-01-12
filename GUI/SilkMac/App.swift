@@ -8,6 +8,7 @@
 import SwiftUI
 import SilkCPU
 import SilkVIA
+import SilkACIA
 import SilkLCD
 
 // MARK: - App
@@ -27,9 +28,10 @@ struct ContentView: View {
     @State var programImporterShowing = false
     @State var programFile: URL?
     @State var programOffset: Int = 0xE000 // TODO: UI
+    @State var showACIAState: Bool = true
     @State var showVIAState: Bool = true
     @State var showLCDState: Bool = true
-    @State var showControllerState: Bool = true
+    @State var showControlPadState: Bool = true
     @State var showMemory: Bool = false
     @State var showVideo: Bool = true
     @State var videoStart: UInt16? = 0x2000
@@ -166,7 +168,7 @@ struct ContentView: View {
                 // MARK: CPU State
                 
                 VStack {
-                    Text("CPU 6502")
+                    Text("CPU 6502 State")
                         .bold()
                     HStack {
                         Text("PC")
@@ -211,13 +213,48 @@ struct ContentView: View {
                 }
                 Spacer()
                 
+                // MARK: ACIA State
+                
+                Toggle("ACIA 6551 State", isOn: $showACIAState)
+                if showACIAState {
+                    VStack {
+                        HStack {
+                            Text("SR")
+                            Text(String(format: "%02X", system.acia.sr))
+                        }
+                        HStack {
+                            Text("CTL")
+                            Text(String(format: "%02X", system.acia.ctl))
+                        }
+                        HStack {
+                            Text("CMD")
+                            Text(String(format: "%02X", system.acia.cmd))
+                        }
+                        HStack {
+                            Text("TDR")
+                            Text(String(format: "%02X", system.acia.tdr))
+                        }
+                        HStack {
+                            Text("TSR")
+                            Text(String(format: "%02X", system.acia.tsr))
+                        }
+                        HStack {
+                            Text("RDR")
+                            Text(String(format: "%02X", system.acia.rdr))
+                        }
+                        HStack {
+                            Text("RSR")
+                            Text(String(format: "%02X", system.acia.rsr))
+                        }
+                    }
+                }
+                Spacer()
+                
                 // MARK: VIA State
                 
-                Toggle("VIA State", isOn: $showVIAState)
+                Toggle("VIA 6522 State", isOn: $showVIAState)
                 if showVIAState {
                     VStack {
-                        Text("VIA 6522")
-                            .bold()
                         HStack {
                             Text("PA")
                             Text(String(format: "%02X", system.via.pa))
@@ -276,11 +313,9 @@ struct ContentView: View {
                 
                 // MARK: LCD State
                 
-                Toggle("LCD State", isOn: $showLCDState)
+                Toggle("LCD HD44780 State", isOn: $showLCDState)
                 if showLCDState {
                     VStack {
-                        Text("LCD HD44780")
-                            .bold()
                         HStack {
                             Text("IR")
                             Text(String(format: "%02X", system.lcd.ir))
@@ -354,8 +389,10 @@ struct ContentView: View {
                 }
                 Spacer()
                 
-                Toggle("Controller View", isOn: $showControllerState)
-                if showControllerState {
+                // MARK: Control Pad State
+                
+                Toggle("Control Pad State", isOn: $showControlPadState)
+                if showControlPadState {
                     HStack {
                         Toggle(
                             isOn: .init(get: { system.controlPad.leftPressed }, set: { system.controlPad.leftPressed = $0 }),
@@ -477,6 +514,7 @@ struct ControlPad {
 class System: ObservableObject {
     @Published var cpu: CPU6502 = CPU6502(load: { _ in 0 }, store: { _, _ in })
     @Published var via: VIA6522 = VIA6522()
+    @Published var acia: ACIA6551 = ACIA6551()
     @Published var lcd: LCDHD44780 = LCDHD44780()
     @Published var controlPad: ControlPad = ControlPad()
     @Published var memory: [UInt8] = Array((0x0000...0xFFFF).map { _ in UInt8.min })
@@ -488,11 +526,14 @@ class System: ObservableObject {
     func reset() {
         self.memory = Array((0x0000...0xFFFF).map { _ in UInt8.random(in: 0x00...0xFF) })
         self.via = VIA6522()
+        self.acia = ACIA6551()
         self.lcd = LCDHD44780()
         self.controlPad = ControlPad()
         self.cpu = CPU6502(
             load: { [weak self] address in
                 switch address {
+                case (0x4000...0x5FFF):
+                    return self?.acia.read(address: UInt8(address & 0x0003)) ?? 0xEA
                 case (0x6000...0x7FFF):
                     let viapa = self?.via.pa ?? 0b00000000
                     let viapb = self?.via.pb ?? 0b00000000
@@ -517,6 +558,8 @@ class System: ObservableObject {
             },
             store: { [weak self] address, value in
                 switch address {
+                case (0x4000...0x5FFF):
+                    self?.acia.write(address: UInt8(address & 0x0003), data: value)
                 case (0x6000...0x7FFF):
                     self?.via.write(address: UInt8(address & 0x000F), data: value)
                     let viapa = self?.via.pa ?? 0b00000000
@@ -563,13 +606,13 @@ class System: ObservableObject {
     }
     
     func screenshot(start: UInt16, end: UInt16, line: UInt16) -> NSImage {
-        let ppm = Self.memoryPPM(cpu: cpu, start: start, end: end, line: line)
+        let ppm = Self.memoryPPM(memory: memory, start: start, end: end, line: line)
         let image = NSImage(data: ppm.data(using: .utf8)!)!
         return image
     }
     
     static func memoryPPM(
-        cpu: CPU6502,
+        memory: [UInt8],
         start: UInt16,
         end: UInt16,
         line: UInt16,
@@ -587,7 +630,7 @@ class System: ObservableObject {
             for x in 0..<width {
                 let pixelIndex = y * width + x
                 let address = pixelIndex >= count ? nil : start + UInt16(pixelIndex)
-                let value: UInt8 = address.map { cpu.load($0) } ?? UInt8.min
+                let value: UInt8 = address.map { memory[Int($0)] } ?? UInt8.min
                 let (r, g, b) = valueChannelConverter(value)
                 screenshot.append("\(r) \(g) \(b)\n")
             }
