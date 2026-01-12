@@ -74,7 +74,7 @@ struct ContentView: View {
                 case .boot, .stop:
                     Button(
                         action: { programImporterShowing = true },
-                        label: { Text("Load Program") }
+                        label: { Text("Load Program to 0x\(String(programOffset, radix: 16))") }
                     )
                     .fileImporter(isPresented: $programImporterShowing, allowedContentTypes: [.data]) { result in
                         switch result {
@@ -93,6 +93,9 @@ struct ContentView: View {
                             log += "\(system.cpu.debugDescription)\n"
                         }
                     }
+                    TextField("Program", value: $programOffset, format: .hex)
+                        .frame(width: 50)
+                    
                 case .run:
                     if stepTimer == nil {
                         HStack {
