@@ -27,7 +27,7 @@ struct SilkMacApp: App {
 struct ContentView: View {
     @State var programImporterShowing = false
     @State var programFile: URL?
-    @State var programOffset: Int = 0xE000 // TODO: UI
+    @State var programOffset: Int = 0xE000
     @State var showACIAState: Bool = true
     @State var showVIAState: Bool = true
     @State var showLCDState: Bool = true
@@ -231,12 +231,20 @@ struct ContentView: View {
                             Text(String(format: "%02X", system.acia.cmd))
                         }
                         HStack {
+                            Text("TS")
+                            Text(String(format: "%02X", system.acia.ts))
+                        }
+                        HStack {
                             Text("TDR")
                             Text(String(format: "%02X", system.acia.tdr))
                         }
                         HStack {
                             Text("TSR")
                             Text(String(format: "%02X", system.acia.tsr))
+                        }
+                        HStack {
+                            Text("RS")
+                            Text(String(format: "%02X", system.acia.rs))
                         }
                         HStack {
                             Text("RDR")
@@ -330,46 +338,32 @@ struct ContentView: View {
                         }
                         HStack {
                             Text("ID")
-                            Text(String(format: "%@", system.lcd.id ? "1" : "0"))
-                        }
-                        HStack {
                             Text("S")
-                            Text(String(format: "%@", system.lcd.s ? "1" : "0"))
-                        }
-                        HStack {
                             Text("D")
-                            Text(String(format: "%@", system.lcd.d ? "1" : "0"))
-                        }
-                        HStack {
                             Text("C")
-                            Text(String(format: "%@", system.lcd.c ? "1" : "0"))
-                        }
-                        HStack {
                             Text("B")
-                            Text(String(format: "%@", system.lcd.b ? "1" : "0"))
-                        }
-                        HStack {
                             Text("SC")
+                            }
+                        HStack {
+                            Text(String(format: "%@", system.lcd.id ? "1" : "0"))
+                            Text(String(format: "%@", system.lcd.s ? "1" : "0"))
+                            Text(String(format: "%@", system.lcd.d ? "1" : "0"))
+                            Text(String(format: "%@", system.lcd.c ? "1" : "0"))
+                            Text(String(format: "%@", system.lcd.b ? "1" : "0"))
                             Text(String(format: "%@", system.lcd.sc ? "1" : "0"))
                         }
                         HStack {
                             Text("RL")
-                            Text(String(format: "%@", system.lcd.rl ? "1" : "0"))
-                        }
-                        HStack {
                             Text("DL")
-                            Text(String(format: "%@", system.lcd.dl ? "1" : "0"))
-                        }
-                        HStack {
                             Text("N")
-                            Text(String(format: "%@", system.lcd.n ? "1" : "0"))
-                        }
-                        HStack {
                             Text("F")
-                            Text(String(format: "%@", system.lcd.f ? "1" : "0"))
+                            Text("BUSY")
                         }
                         HStack {
-                            Text("BUSY")
+                            Text(String(format: "%@", system.lcd.rl ? "1" : "0"))
+                            Text(String(format: "%@", system.lcd.dl ? "1" : "0"))
+                            Text(String(format: "%@", system.lcd.n ? "1" : "0"))
+                            Text(String(format: "%@", system.lcd.f ? "1" : "0"))
                             Text(String(format: "%@", system.lcd.busy ? "1" : "0"))
                         }
                         VStack {
