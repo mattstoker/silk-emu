@@ -88,28 +88,21 @@ extension ACIA6551 {
     static let srDSRBMask: UInt8 = 0b01000000
     static let srInterruptMask: UInt8 = 0b10000000
     static let tsCountMask: UInt8 = 0b00001111
-    static let tsReadyMask: UInt8 = 0b00010000
     static let rsCountMask: UInt8 = 0b00001111
-    static let rsReadyMask: UInt8 = 0b00010000
 }
 
 // MARK: - Register Addressing
 
 extension ACIA6551 {
-    public enum Register {
-        case DATA
-        case SR
-        case CMD
-        case CTL
+    public enum Register: UInt8 {
+        case DATA = 0x0
+        case SR = 0x1
+        case CMD = 0x2
+        case CTL = 0x3
     }
     
     static func destination(address: UInt8) -> Register {
-        switch (address & 0x03) {
-        case 0x1: return .SR
-        case 0x2: return .CMD
-        case 0x3: return .CTL
-        default: return .DATA
-        }
+        return Register(rawValue: address) ?? .DATA
     }
 }
 
@@ -129,7 +122,7 @@ extension ACIA6551 {
     mutating func read(register: Register) -> UInt8 {
         switch register {
         case .DATA:
-            // Clear auto-clearing bits of the Status Register
+            // Clear auto-clearing bits of the Status Register on read of the RDR
             sr = sr & ~ACIA6551.srRDRFullMask & ~ACIA6551.srOverrunMask & ~ACIA6551.srFramingEMask & ~ACIA6551.srParityEMask
             return rdr
         case .SR:
@@ -172,11 +165,10 @@ extension ACIA6551 {
     public mutating func receiveBit() {
         // Receive the bit and shift it into the Receive Shift Register
         let bit = receive()
-        rsr = (rsr << 1) & (bit ? 0b1 : 0b0)
+        rsr = (rsr >> 1) | (bit ? 0b10000000 : 0b00000000)
         
         // Read the status of the receive registers
         var rsCount = UInt8(rs & ACIA6551.rsCountMask)
-        var rsReady = (rs & ACIA6551.rsReadyMask) != 0
         
         // Increment the count of received bits in the RSR
         // When the RSR is full, transfer it to the RDR
@@ -185,14 +177,13 @@ extension ACIA6551 {
         if rsCount == 8 {
             rdr = rsr
             rsr = 0b00000000
-            rsCount = 0
-            if rsReady {
+            if (sr & ACIA6551.srRDRFullMask) != 0 {
                 sr = sr | ACIA6551.srOverrunMask
             }
-            rsReady = true
+            sr = sr | ACIA6551.srRDRFullMask
+            rsCount = 0
         }
-        rs = rsReady ? (rs | ACIA6551.rsReadyMask) : (rs & ~ACIA6551.rsReadyMask)
-        rs = rs | (rsCount & ACIA6551.rsCountMask)
+        rs = (rs & ~ACIA6551.rsCountMask) | (rsCount & ACIA6551.rsCountMask)
     }
     
     public mutating func transmitBit() {
@@ -203,7 +194,10 @@ extension ACIA6551 {
         // When the TSR is empty, it is logical to transfer the TDR to it, but that is not how the W65C51 works
         // Instead, the TSR and TDR are written at the same time, and SR bit 5 is never 0
         tsCount -= 1
-        ts = ts | (tsCount & ACIA6551.tsCountMask)
+        ts = (ts & ~ACIA6551.tsCountMask) | (tsCount & ACIA6551.tsCountMask)
+        if (tsCount == 0) {
+            tsCount = 8
+        }
         
         // Shift the bit to transmit out of the Transmit Shift Register and transmit it
         let bit = (tsr & 0b1) != 0
