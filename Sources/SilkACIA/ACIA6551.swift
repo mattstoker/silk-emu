@@ -173,8 +173,7 @@ extension ACIA6551 {
         // Increment the count of received bits in the RSR
         // When the RSR is full, transfer it to the RDR
         // On transfer, if the data in the RDR had not been read yet, set the overrun flag
-        rsCount += 1
-        if rsCount == 8 {
+        if rsCount == 7 {
             rdr = rsr
             rsr = 0b00000000
             if (sr & ACIA6551.srRDRFullMask) != 0 {
@@ -182,6 +181,8 @@ extension ACIA6551 {
             }
             sr = sr | ACIA6551.srRDRFullMask
             rsCount = 0
+        } else {
+            rsCount += 1
         }
         rs = (rs & ~ACIA6551.rsCountMask) | (rsCount & ACIA6551.rsCountMask)
     }
@@ -193,10 +194,11 @@ extension ACIA6551 {
         // Decrement the count of bits-to-transmit in the TSR
         // When the TSR is empty, it is logical to transfer the TDR to it, but that is not how the W65C51 works
         // Instead, the TSR and TDR are written at the same time, and SR bit 5 is never 0
-        tsCount -= 1
         ts = (ts & ~ACIA6551.tsCountMask) | (tsCount & ACIA6551.tsCountMask)
         if (tsCount == 0) {
-            tsCount = 8
+            tsCount = 7
+        } else {
+            tsCount -= 1
         }
         
         // Shift the bit to transmit out of the Transmit Shift Register and transmit it

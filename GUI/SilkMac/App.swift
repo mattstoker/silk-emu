@@ -17,23 +17,18 @@ import SilkLCD
 struct SilkMacApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView().environmentObject(System())
+            SystemView().environmentObject(System())
         }
     }
 }
 
 // MARK: - UI
 
-struct ContentView: View {
+struct SystemView: View {
+    @EnvironmentObject var system: System
     @State var programImporterShowing = false
     @State var programFile: URL?
     @State var programOffset: Int = 0xE000
-    @State var showACIAState: Bool = true
-    @State var showVIAState: Bool = true
-    @State var showLCDState: Bool = true
-    @State var showControlPadState: Bool = true
-    @State var showMemory: Bool = false
-    @State var showVideo: Bool = true
     @State var videoStart: UInt16? = 0x2000
     @State var videoEnd: UInt16? = 0x4000
     @State var videoLine: UInt16? = 0x80
@@ -41,7 +36,16 @@ struct ContentView: View {
     @State var stepTimer: Timer? = nil
     @State var breakpoint: UInt16? = nil
     @State var log: String = ""
-    @EnvironmentObject var system: System
+    @State var showACIAState: Bool = true
+    @State var aciaReceiveTimer: Timer? = nil
+    @State var aciaDataReceiveQueue: String = ""
+    @State var aciaTransmitTimer: Timer? = nil
+    @State var aciaDataTransmitQueue: String = ""
+    @State var showVIAState: Bool = false
+    @State var showLCDState: Bool = true
+    @State var showControlPadState: Bool = true
+    @State var showMemory: Bool = false
+    @State var showVideo: Bool = true
     
     struct MemoryEntry: Identifiable {
         var address: UInt16
@@ -254,6 +258,55 @@ struct ContentView: View {
                             Text("RSR")
                             Text(String(format: "%02X", system.acia.rsr))
                         }
+                        Toggle(
+                            isOn: .init(
+                                get: { aciaReceiveTimer != nil },
+                                set: { on in
+                                    if on {
+                                        aciaReceiveTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+                                            guard let character = aciaDataReceiveQueue.first else { return }
+                                            aciaDataReceiveQueue.removeFirst()
+                                            system.receiveQueue = System.bits(of: String(character))
+                                            while !system.receiveQueue.isEmpty {
+                                                system.acia.receiveBit()
+                                            }
+                                        }
+                                    } else {
+                                        aciaReceiveTimer?.invalidate()
+                                        aciaReceiveTimer = nil
+                                    }
+                                }
+                            ),
+                            label: { Text("Remote Transmitting") }
+                        )
+                        TextField("Empty", text: $aciaDataReceiveQueue)
+                            .frame(width: 200)
+                        Toggle(
+                            isOn: .init(
+                                get: { aciaTransmitTimer != nil },
+                                set: { on in
+                                    if on {
+                                        aciaTransmitTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+                                            for _ in 0..<UInt8.bitWidth {
+                                                system.acia.transmitBit()
+                                            }
+                                            while system.transmitQueue.count > UInt8.bitWidth {
+                                                let bits = Array(system.transmitQueue[..<UInt8.bitWidth])
+                                                system.transmitQueue.removeFirst(UInt8.bitWidth)
+                                                let byte = System.string(of: bits)
+                                                aciaDataTransmitQueue.append(byte)
+                                            }
+                                        }
+                                    } else {
+                                        aciaTransmitTimer?.invalidate()
+                                        aciaTransmitTimer = nil
+                                    }
+                                }
+                            ),
+                            label: { Text("Remote Receiving") }
+                        )
+                        TextField("Empty", text: $aciaDataTransmitQueue)
+                            .frame(width: 200)
                     }
                 }
                 Spacer()
@@ -416,7 +469,7 @@ struct ContentView: View {
                 
                 Toggle("Memory View", isOn: $showMemory)
                 if showMemory {
-                    Table(system.memory.indices.map { MemoryEntry(address: UInt16($0), value: system.cpu.load(UInt16($0))) }) {
+                    Table(system.memory.indices.map { MemoryEntry(address: UInt16($0), value: system.memory[$0]) }) {
                         TableColumn("Addr") {
                             Text(String(format: "%04X", $0.address))
                         }
@@ -506,21 +559,38 @@ struct ControlPad {
 // MARK: - System
 
 class System: ObservableObject {
-    @Published var cpu: CPU6502 = CPU6502(load: { _ in 0 }, store: { _, _ in })
-    @Published var via: VIA6522 = VIA6522()
-    @Published var acia: ACIA6551 = ACIA6551()
-    @Published var lcd: LCDHD44780 = LCDHD44780()
-    @Published var controlPad: ControlPad = ControlPad()
-    @Published var memory: [UInt8] = Array((0x0000...0xFFFF).map { _ in UInt8.min })
+    @Published var cpu: CPU6502
+    @Published var via: VIA6522
+    @Published var acia: ACIA6551
+    @Published var lcd: LCDHD44780
+    @Published var controlPad: ControlPad
+    @Published var memory: [UInt8]
+    @Published var transmitQueue: [Bool]
+    @Published var receiveQueue: [Bool]
     
     init() {
+        cpu = CPU6502(load: { _ in 0 }, store: { _, _ in })
+        via = VIA6522()
+        acia = ACIA6551()
+        lcd = LCDHD44780()
+        controlPad = ControlPad()
+        memory = Array((0x0000...0xFFFF).map { _ in UInt8.min })
+        transmitQueue = []
+        receiveQueue = []
         reset()
     }
     
     func reset() {
         self.memory = Array((0x0000...0xFFFF).map { _ in UInt8.random(in: 0x00...0xFF) })
         self.via = VIA6522()
-        self.acia = ACIA6551()
+        self.acia = ACIA6551(
+            transmit: { bit in
+                self.transmitQueue.append(bit)
+            },
+            receive: {
+                return self.receiveQueue.isEmpty ? false : self.receiveQueue.removeFirst()
+            }
+        )
         self.lcd = LCDHD44780()
         self.controlPad = ControlPad()
         self.cpu = CPU6502(
@@ -630,5 +700,39 @@ class System: ObservableObject {
             }
         }
         return screenshot
+    }
+    
+    static func bits(of string: String) -> [Bool] {
+        return Array(
+            string.utf8.map {
+                [
+                    ($0 & 0b00000001) != 0,
+                    ($0 & 0b00000010) != 0,
+                    ($0 & 0b00000100) != 0,
+                    ($0 & 0b00001000) != 0,
+                    ($0 & 0b00010000) != 0,
+                    ($0 & 0b00100000) != 0,
+                    ($0 & 0b01000000) != 0,
+                    ($0 & 0b10000000) != 0,
+                ]
+            }.joined()
+        )
+    }
+    
+    static func string(of bits: [Bool]) -> String {
+        var bytes: [UInt8] = []
+        for byteIndex in 0..<(bits.count / UInt8.bitWidth) {
+            let bit0Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 0] ? 0b00000001 : 0
+            let bit1Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 1] ? 0b00000010 : 0
+            let bit2Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 2] ? 0b00000100 : 0
+            let bit3Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 3] ? 0b00001000 : 0
+            let bit4Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 4] ? 0b00010000 : 0
+            let bit5Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 5] ? 0b00100000 : 0
+            let bit6Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 6] ? 0b01000000 : 0
+            let bit7Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 7] ? 0b10000000 : 0
+            let byte: UInt8 = bit0Mask | bit1Mask | bit2Mask | bit3Mask | bit4Mask | bit5Mask | bit6Mask | bit7Mask
+            bytes.append(byte)
+        }
+        return String(cString: bytes + [0])
     }
 }
