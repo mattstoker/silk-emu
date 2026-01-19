@@ -7,6 +7,9 @@
 //  Documentation largely based on the work found at:
 //  https://www.masswerk.at/6502/6502_instruction_set.html
 //
+//  Official documentation for the W65C02 can be found at:
+//  https://www.westerndesigncenter.com/wdc/documentation/w65c02s.pdf
+//
 
 import Foundation
 

@@ -51,7 +51,7 @@ struct ACIA6551Tests {
         let data = acia.read(address: 0b00000000)
         #expect(data == acia.rdr)
         #expect(acia == ACIA6551(
-            sr: 0xFF & 0b00010000,
+            sr: 0xFF & 0b00010010,
             ctl: 0xEE,
             cmd: 0xDD,
             tdr: 0xCC,
@@ -88,7 +88,7 @@ struct ACIA6551Tests {
         // Initiate send of data
         acia = ACIA6551()
         acia.write(address: 0b00000000, data: 0b10101010)
-        #expect(acia == ACIA6551(tdr: 0b10101010, tsr: 0b10101010))
+        #expect(acia == ACIA6551(ts: 0b00001000, tdr: 0b10101010, tsr: 0b10101010))
     }
     
     @Test func receive() {

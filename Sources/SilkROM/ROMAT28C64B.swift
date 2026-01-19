@@ -1,0 +1,30 @@
+//
+//  ROMAT28C64B.swift
+//  SilkEmu
+//
+//  Created by Matt Stoker on 1/18/26.
+//
+
+// MARK: ROM State & Equality
+
+public struct ROMAT28C64B: Hashable {
+    public static let size = 0x2000
+    public private(set) var memory: [UInt8] = Array(repeating: .zero, count: ROMAT28C64B.size)
+    
+    public init() { }
+    
+    public func load(_ address: UInt16) -> UInt8 {
+        let addressResolved = Int(address % UInt16(Self.size))
+        return memory[addressResolved]
+    }
+    
+    public mutating func program(data: [UInt8], startingAt offset: UInt16) {
+        for dataIndex in data.indices {
+            let memoryIndex = Int(offset + UInt16(dataIndex))
+            guard memoryIndex < Self.size else {
+                continue
+            }
+            memory[memoryIndex] = data[dataIndex]
+        }
+    }
+}

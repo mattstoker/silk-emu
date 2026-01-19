@@ -10,6 +10,7 @@ import SilkCPU
 import SilkVIA
 import SilkACIA
 import SilkLCD
+import SilkSystem
 
 // MARK: - App
 
@@ -19,6 +20,27 @@ struct SilkMacApp: App {
         WindowGroup {
             SystemView().environmentObject(System())
         }
+    }
+}
+
+extension System: @retroactive ObservableObject {
+    public func executePublished(count: Int = 1) {
+        execute(count: count)
+        objectWillChange.send()
+    }
+    
+    public func executePublished(until breakpoint: UInt16) {
+        repeat {
+            cpu.execute()
+            objectWillChange.send()
+        } while cpu.pc != breakpoint
+    }
+    
+    public func executePublished(upTo opcode: UInt8) {
+        repeat {
+            cpu.execute()
+            objectWillChange.send()
+        } while cpu.load(cpu.pc) != opcode
     }
 }
 
@@ -95,7 +117,8 @@ struct SystemView: View {
                             var program: [UInt8] = Array(repeating: 0x00, count: programData.count)
                             programData.copyBytes(to: &program, count: min(program.count, programData.count))
                             
-                            system.load(data: program, startingAt: UInt16(programOffset))
+                            system.program(data: program, startingAt: UInt16(programOffset - 0xE000))
+                            system.executePublished()
                             log += "\(system.cpu.debugDescription)\n"
                         }
                     }
@@ -108,11 +131,11 @@ struct SystemView: View {
                             Button(
                                 action: {
                                     if let breakpoint = breakpoint {
-                                        system.execute(until: breakpoint)
+                                        system.executePublished(until: breakpoint)
                                         log += "\(system.cpu.debugDescription)\n"
                                     } else {
                                         stepTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
-                                            system.execute()
+                                            system.executePublished()
                                         }
                                         log = ""
                                     }
@@ -125,7 +148,7 @@ struct SystemView: View {
                         HStack {
                             Button(
                                 action: {
-                                    system.execute(count: stepCount ?? 1)
+                                    system.executePublished(count: stepCount ?? 1)
                                     log += "\(system.cpu.debugDescription)\n"
                                 },
                                 label: { Text("Step\(stepCount.map { " 0x\(String($0, radix: 16))" } ?? "")") }
@@ -136,7 +159,7 @@ struct SystemView: View {
                         HStack {
                             Button(
                                 action: {
-                                    system.execute(upTo: 0x20 /*JSR*/)
+                                    system.executePublished(upTo: 0x20 /*JSR*/)
                                     log += "\(system.cpu.debugDescription)\n"
                                 },
                                 label: { Text("Step Until Next JSR") }
@@ -145,8 +168,8 @@ struct SystemView: View {
                         HStack {
                             Button(
                                 action: {
-                                    system.execute(upTo: 0x60 /*RTS*/)
-                                    system.execute()
+                                    system.executePublished(upTo: 0x60 /*RTS*/)
+                                    system.executePublished()
                                     log += "\(system.cpu.debugDescription)\n"
                                 },
                                 label: { Text("Step After Next RTS") }
@@ -210,6 +233,9 @@ struct SystemView: View {
                     Button(
                         action: {
                             system.reset()
+                            system.objectWillChange.send()
+                            aciaDataReceiveQueue = ""
+                            aciaDataTransmitQueue = ""
                             log = ""
                         },
                         label: { Text("Reset") }
@@ -266,9 +292,11 @@ struct SystemView: View {
                                         aciaReceiveTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
                                             guard let character = aciaDataReceiveQueue.first else { return }
                                             aciaDataReceiveQueue.removeFirst()
-                                            system.receiveQueue = System.bits(of: String(character))
-                                            while !system.receiveQueue.isEmpty {
-                                                system.acia.receiveBit()
+                                            var receiveQueue = System.bits(of: String(character))
+                                            while !receiveQueue.isEmpty {
+                                                let bit = receiveQueue[0]
+                                                receiveQueue.removeFirst()
+                                                system.acia.receiveBit() { bit }
                                             }
                                         }
                                     } else {
@@ -287,15 +315,16 @@ struct SystemView: View {
                                 set: { on in
                                     if on {
                                         aciaTransmitTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+                                            var transmitQueue: [Bool] = []
                                             for _ in 0..<UInt8.bitWidth {
-                                                system.acia.transmitBit()
+                                                var bit = false
+                                                system.acia.transmitBit() { bit = $0 }
+                                                transmitQueue.append(bit)
                                             }
-                                            while system.transmitQueue.count > UInt8.bitWidth {
-                                                let bits = Array(system.transmitQueue[..<UInt8.bitWidth])
-                                                system.transmitQueue.removeFirst(UInt8.bitWidth)
-                                                let byte = System.string(of: bits)
-                                                aciaDataTransmitQueue.append(byte)
-                                            }
+                                            let bits = Array(transmitQueue[..<UInt8.bitWidth])
+                                            transmitQueue.removeFirst(UInt8.bitWidth)
+                                            let byte = System.string(of: bits)
+                                            aciaDataTransmitQueue.append(byte)
                                         }
                                     } else {
                                         aciaTransmitTimer?.invalidate()
@@ -469,7 +498,7 @@ struct SystemView: View {
                 
                 Toggle("Memory View", isOn: $showMemory)
                 if showMemory {
-                    Table(system.memory.indices.map { MemoryEntry(address: UInt16($0), value: system.memory[$0]) }) {
+                    Table((0x0000...0xFFFF).map { MemoryEntry(address: UInt16($0), value: system.cpu.load(UInt16($0))) }) {
                         TableColumn("Addr") {
                             Text(String(format: "%04X", $0.address))
                         }
@@ -546,193 +575,12 @@ extension FormatStyle where Self == IntegerFormatStyle<Int64> {
     public static var hex: HexFormatter<Int64> { HexFormatter<Int64>() }
 }
 
-// MARK: - ControlPad
+// MARK: - Screenshot
 
-struct ControlPad {
-    var leftPressed: Bool = false
-    var rightPressed: Bool = false
-    var upPressed: Bool = false
-    var downPressed: Bool = false
-    var actionPressed: Bool = false
-}
-
-// MARK: - System
-
-class System: ObservableObject {
-    @Published var cpu: CPU6502
-    @Published var via: VIA6522
-    @Published var acia: ACIA6551
-    @Published var lcd: LCDHD44780
-    @Published var controlPad: ControlPad
-    @Published var memory: [UInt8]
-    @Published var transmitQueue: [Bool]
-    @Published var receiveQueue: [Bool]
-    
-    init() {
-        cpu = CPU6502(load: { _ in 0 }, store: { _, _ in })
-        via = VIA6522()
-        acia = ACIA6551()
-        lcd = LCDHD44780()
-        controlPad = ControlPad()
-        memory = Array((0x0000...0xFFFF).map { _ in UInt8.min })
-        transmitQueue = []
-        receiveQueue = []
-        reset()
-    }
-    
-    func reset() {
-        self.memory = Array((0x0000...0xFFFF).map { _ in UInt8.random(in: 0x00...0xFF) })
-        self.via = VIA6522()
-        self.acia = ACIA6551(
-            transmit: { bit in
-                self.transmitQueue.append(bit)
-            },
-            receive: {
-                return self.receiveQueue.isEmpty ? false : self.receiveQueue.removeFirst()
-            }
-        )
-        self.lcd = LCDHD44780()
-        self.controlPad = ControlPad()
-        self.cpu = CPU6502(
-            load: { [weak self] address in
-                switch address {
-                case (0x4000...0x5FFF):
-                    return self?.acia.read(address: UInt8(address & 0x0003)) ?? 0xEA
-                case (0x6000...0x7FFF):
-                    let viapa = self?.via.pa ?? 0b00000000
-                    let viapb = self?.via.pb ?? 0b00000000
-                    let lcdrs = (viapa & 0b00100000) != 0
-                    let lcdrw = (viapa & 0b01000000) != 0
-                    let lcde = (viapa & 0b10000000) != 0
-                    var lcddata = viapb
-                    if lcde {
-                        self?.lcd.execute(rs: lcdrs, rw: lcdrw, data: &lcddata)
-                    }
-                    let paIn = UInt8(0) |
-                        ((self?.controlPad.upPressed ?? false) ? 0b00000001 : 0) |
-                        ((self?.controlPad.leftPressed ?? false) ? 0b00000010 : 0) |
-                        ((self?.controlPad.rightPressed ?? false) ? 0b00000100 : 0) |
-                        ((self?.controlPad.downPressed ?? false) ? 0b00001000 : 0) |
-                        ((self?.controlPad.actionPressed ?? false) ? 0b00010000 : 0)
-                    
-                    return self?.via.read(address: UInt8(address & 0x000F), paIn: paIn, pbIn: 0x00) ?? 0xEA
-                default:
-                    return self?.memory[Int(address)] ?? 0xEA
-                }
-            },
-            store: { [weak self] address, value in
-                switch address {
-                case (0x4000...0x5FFF):
-                    self?.acia.write(address: UInt8(address & 0x0003), data: value)
-                case (0x6000...0x7FFF):
-                    self?.via.write(address: UInt8(address & 0x000F), data: value)
-                    let viapa = self?.via.pa ?? 0b00000000
-                    let viapb = self?.via.pb ?? 0b00000000
-                    let lcdrs = (viapa & 0b00100000) != 0
-                    let lcdrw = (viapa & 0b01000000) != 0
-                    let lcde = (viapa & 0b10000000) != 0
-                    var lcddata = viapb
-                    if lcde {
-                        self?.lcd.execute(rs: lcdrs, rw: lcdrw, data: &lcddata)
-                    }
-                default:
-                    self?.memory[Int(address)] = value
-                }
-            }
-        )
-    }
-    
-    func load(data: [UInt8], startingAt offset: UInt16) {
-        reset()
-        // TODO: What if data is too large or offset causes overlap?
-        for index in data.indices {
-            memory[Int(offset + UInt16(index))] = data[index]
-        }
-        cpu.execute()
-    }
-    
-    func execute(count: Int = 1) {
-        for _ in 0..<count {
-            cpu.execute()
-        }
-    }
-    
-    func execute(until breakpoint: UInt16) {
-        repeat {
-            cpu.execute()
-        } while cpu.pc != breakpoint
-    }
-    
-    func execute(upTo opcode: UInt8) {
-        repeat {
-            cpu.execute()
-        } while memory[Int(cpu.pc)] != opcode
-    }
-    
+extension System {
     func screenshot(start: UInt16, end: UInt16, line: UInt16) -> NSImage {
-        let ppm = Self.memoryPPM(memory: memory, start: start, end: end, line: line)
+        let ppm = memoryPPM(start: start, end: end, line: line)
         let image = NSImage(data: ppm.data(using: .utf8)!)!
         return image
-    }
-    
-    static func memoryPPM(
-        memory: [UInt8],
-        start: UInt16,
-        end: UInt16,
-        line: UInt16,
-        channelMaxValue: UInt8 = 3,
-        valueChannelConverter: (UInt8) -> (UInt8, UInt8, UInt8) = { (($0 & 0b00000011) >> 0, ($0 & 0b00001100) >> 2, ($0 & 0b00110000) >> 4) }
-    ) -> String {
-        let count = Int(min(end, UInt16.max)) - Int(min(start, min(end, UInt16.max)))
-        let width = Int(line)
-        let height = Int((Double(count) / Double(width)).rounded(.up))
-        var screenshot = ""
-        screenshot.append("P3\n")
-        screenshot.append("\(width) \(height)\n")
-        screenshot.append("\(channelMaxValue)\n")
-        for y in 0..<height {
-            for x in 0..<width {
-                let pixelIndex = y * width + x
-                let address = pixelIndex >= count ? nil : start + UInt16(pixelIndex)
-                let value: UInt8 = address.map { memory[Int($0)] } ?? UInt8.min
-                let (r, g, b) = valueChannelConverter(value)
-                screenshot.append("\(r) \(g) \(b)\n")
-            }
-        }
-        return screenshot
-    }
-    
-    static func bits(of string: String) -> [Bool] {
-        return Array(
-            string.utf8.map {
-                [
-                    ($0 & 0b00000001) != 0,
-                    ($0 & 0b00000010) != 0,
-                    ($0 & 0b00000100) != 0,
-                    ($0 & 0b00001000) != 0,
-                    ($0 & 0b00010000) != 0,
-                    ($0 & 0b00100000) != 0,
-                    ($0 & 0b01000000) != 0,
-                    ($0 & 0b10000000) != 0,
-                ]
-            }.joined()
-        )
-    }
-    
-    static func string(of bits: [Bool]) -> String {
-        var bytes: [UInt8] = []
-        for byteIndex in 0..<(bits.count / UInt8.bitWidth) {
-            let bit0Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 0] ? 0b00000001 : 0
-            let bit1Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 1] ? 0b00000010 : 0
-            let bit2Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 2] ? 0b00000100 : 0
-            let bit3Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 3] ? 0b00001000 : 0
-            let bit4Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 4] ? 0b00010000 : 0
-            let bit5Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 5] ? 0b00100000 : 0
-            let bit6Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 6] ? 0b01000000 : 0
-            let bit7Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 7] ? 0b10000000 : 0
-            let byte: UInt8 = bit0Mask | bit1Mask | bit2Mask | bit3Mask | bit4Mask | bit5Mask | bit6Mask | bit7Mask
-            bytes.append(byte)
-        }
-        return String(cString: bytes + [0])
     }
 }

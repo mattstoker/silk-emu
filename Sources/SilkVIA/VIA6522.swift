@@ -4,6 +4,9 @@
 //
 //  Created by Matt Stoker on 1/8/26.
 //
+//  Official documentation for the W65C22 can be found at:
+//  https://www.westerndesigncenter.com/wdc/documentation/w65c22.pdf
+//
 
 // MARK: VIA State & Equality
 

@@ -4,6 +4,10 @@
 //
 //  Created by Matt Stoker on 1/10/26.
 //
+//  Official documentation for the HD44780 can be found at:
+//  https://cdn-shop.adafruit.com/datasheets/HD44780.pdf
+//
+
 
 // MARK: LCD State & Equality
 

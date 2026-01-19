@@ -4,6 +4,9 @@
 //
 //  Created by Matt Stoker on 1/11/26.
 //
+//  Official documentation for the W65C51 can be found at:
+//  https://www.westerndesigncenter.com/wdc/documentation/w65c51n.pdf
+//
 
 // MARK: ACIA State & Equality
 
@@ -17,8 +20,6 @@ public struct ACIA6551 {
     public internal(set) var rs: UInt8
     public internal(set) var rdr: UInt8
     public internal(set) var rsr: UInt8
-    public internal(set) var transmit: (Bool) -> ()
-    public internal(set) var receive: () -> Bool
     
     public init(
         sr: UInt8 = 0x00,
@@ -29,9 +30,7 @@ public struct ACIA6551 {
         tsr: UInt8 = 0x00,
         rs: UInt8 = 0x00,
         rdr: UInt8 = 0x00,
-        rsr: UInt8 = 0x00,
-        transmit: @escaping (Bool) -> () = { _ in },
-        receive: @escaping () -> Bool = { true }
+        rsr: UInt8 = 0x00
     ) {
         self.sr = sr
         self.ctl = ctl
@@ -42,8 +41,6 @@ public struct ACIA6551 {
         self.rs = rs
         self.rdr = rdr
         self.rsr = rsr
-        self.transmit = transmit
-        self.receive = receive
     }
 }
 
@@ -162,7 +159,7 @@ extension ACIA6551 {
 // MARK: - Transmit & Receive
 
 extension ACIA6551 {
-    public mutating func receiveBit() {
+    public mutating func receiveBit(receive: () -> Bool) {
         // Receive the bit and shift it into the Receive Shift Register
         let bit = receive()
         rsr = (rsr >> 1) | (bit ? 0b10000000 : 0b00000000)
@@ -187,7 +184,7 @@ extension ACIA6551 {
         rs = (rs & ~ACIA6551.rsCountMask) | (rsCount & ACIA6551.rsCountMask)
     }
     
-    public mutating func transmitBit() {
+    public mutating func transmitBit(transmit: (Bool) -> ()) {
         // Read the status of the transmit registers
         var tsCount = UInt8(ts & ACIA6551.tsCountMask)
         
