@@ -17,6 +17,18 @@ struct SilkEmu: ParsableCommand {
     var programOffset: Int = 0
     
     @Option
+    var clockFrequency: Double = 1_000_000.0
+    
+    @Option
+    var realtimeRatio: Double = 1.0 / 1.0
+    
+    @Option
+    var aciaTransmitFile: String? = nil
+    
+    @Option
+    var aciaReceiveFile: String? = nil
+    
+    @Option
     var screenshotFrequency: Int = 0
     
     @Option
@@ -28,33 +40,36 @@ struct SilkEmu: ParsableCommand {
     @Option
     var screenshotWidth: Int = 0x80
     
-    @Option
-    var stepSleep: Double = 0.01
-    
     @Flag
     var printState: Bool = false
     
     @Flag
-    var stepWait: Bool = false
-    
-    static let queue = DispatchQueue(label: "CPU Execution Loop")
+    var printLCD: Bool = false
     
     mutating func run() throws {
+        // Load the provided program
         let programData = try Data(contentsOf: URL(fileURLWithPath: programFile))
         var program: [UInt8] = Array(repeating: 0x00, count: programData.count)
         programData.copyBytes(to: &program, count: min(program.count, programData.count))
         
+        // Create a system and load the program into it
         let system = System()
         system.program(data: program, startingAt: 0x0000)
         
-        var aciaDataReceiveQueue = "This is a test"
-        var aciaDataTransmitQueue = ""
+        // Open files being used for ACIA transmit / receive
+        let aciaTransmitStream = aciaTransmitFile.map { fopen($0, "r") } ?? nil
+        let aciaReceiveStream = aciaReceiveFile.map { fopen($0, "a") } ?? nil
         
+        // Execution loop
         var instructionsExecuted = 0
+        let executionBegin = Date()
+        var transmitTime = 0.0
+        var transmitQueue = [Bool]()
+        var receiveTime = 0.0
+        var receiveQueue = [Bool]()
+        var displayedLCD = ""
         while true {
-            if printState {
-                print("\(system.cpu.debugDescription)    LCD: \(String(decoding: system.lcd.ddram, as: UTF8.self))")
-            }
+            // Execute an instruction
             switch system.cpu.state {
             case .boot, .run:
                 system.execute()
@@ -63,46 +78,75 @@ struct SilkEmu: ParsableCommand {
             case .stop:
                 ()
             }
+            instructionsExecuted += 1
             
-            // TODO: When should acia be checked?
-            if instructionsExecuted % 100 == 0 {
-                if let character = aciaDataReceiveQueue.first {
-                    aciaDataReceiveQueue.removeFirst()
-                    var receiveQueue = System.bits(of: String(character))
-                    while !receiveQueue.isEmpty {
-                        let bit = receiveQueue[0]
-                        receiveQueue.removeFirst()
-                        system.acia.receiveBit() { bit }
-                    }
-                }
-                
-                if system.acia.ts >= UInt8.bitWidth {
-                    var transmitQueue: [Bool] = []
-                    for _ in 0..<UInt8.bitWidth {
-                        var bit = false
-                        system.acia.transmitBit() { bit = $0 }
-                        transmitQueue.append(bit)
-                    }
-                    let bits = Array(transmitQueue[..<UInt8.bitWidth])
-                    transmitQueue.removeFirst(UInt8.bitWidth)
-                    let byte = System.string(of: bits)
-                    //                aciaDataTransmitQueue.append(byte)
-                    print(byte, terminator: "")
+            // Keep track of the simulated time and real-time that have elapsed
+            let time = Double(instructionsExecuted) / clockFrequency
+            //let realtime = abs(executionBegin.timeIntervalSinceNow)
+            
+            // Transmit data via the ACIA
+            if let aciaTransmitStream = aciaTransmitStream, transmitQueue.isEmpty {
+                let c = fgetc(aciaTransmitStream)
+                if c != EOF {
+                    let byte = UInt8(c)
+                    transmitQueue.append(contentsOf: System.bits(of: byte))
                 }
             }
-                            
-            instructionsExecuted += 1
+            if abs(transmitTime - time) > 1.0 / system.acia.baudRate.rawValue, let bit = transmitQueue.first {
+                transmitQueue.removeFirst()
+                system.acia.receiveBit() { bit }
+                transmitTime = time
+            }
+            
+            // Receive data via the ACIA
+            if abs(receiveTime - time) > 1.0 / system.acia.baudRate.rawValue, system.acia.ts > 0 {
+                var bit = false
+                system.acia.transmitBit() { bit = $0 }
+                receiveQueue.append(bit)
+                receiveTime = time
+            }
+            if let aciaReceiveStream = aciaReceiveStream, receiveQueue.count >= UInt8.bitWidth {
+                let bits = Array(receiveQueue[..<UInt8.bitWidth])
+                receiveQueue.removeFirst(UInt8.bitWidth)
+                let byte = System.bytes(of: bits)[0]
+                if byte != 0 {
+                    let c = Int32(byte)
+                    fputc(c, aciaReceiveStream)
+                    fflush(aciaReceiveStream)
+                }
+            }
+            
+            // Emit system state, if requested
+            if printState {
+                print("\(system.cpu.debugDescription)")
+            }
+            
+            // Print LCD changes, if requested
+            if printLCD {
+                let lcd = String(decoding: system.lcd.ddram, as: UTF8.self)
+                if displayedLCD != lcd {
+                    displayedLCD = lcd
+                    print(lcd)
+                }
+            }
+                
+            // Take memory screenshots, if requested
             if screenshotFrequency > 0 && instructionsExecuted % screenshotFrequency == 0 {
                 let screenshot = system.memoryPPM(start: UInt16(screenshotStartAddress), end: UInt16(screenshotEndAddress), line: UInt16(screenshotWidth))
                 try screenshot.write(toFile: "\(programFile)_\(instructionsExecuted).ppm", atomically: true, encoding: .utf8)
             }
-                                    
-            if stepSleep != 0 {
-                Thread.sleep(forTimeInterval: stepSleep)
+            
+            // Match real-time to simulated execution time
+            let simulatedTime = time * realtimeRatio
+            let targetTime = executionBegin + simulatedTime
+            let timeDifference = targetTime.timeIntervalSinceNow
+            if timeDifference > 0.0001 {
+                Thread.sleep(until: targetTime)
             }
-            if stepWait {
-                _ = getchar()
-            }
+            
+//            if instructionsExecuted % 100_000 == 0 {
+//                print("Executed: \(instructionsExecuted)  Rate: \(Double(instructionsExecuted) / abs(executionBegin.timeIntervalSinceNow) / 1_000_000) MHz")
+//            }
         }
     }
 }

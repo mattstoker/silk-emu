@@ -191,23 +191,23 @@ extension System {
 
 extension System {
     public static func bits(of string: String) -> [Bool] {
-        return Array(
-            string.utf8.map {
-                [
-                    ($0 & 0b00000001) != 0,
-                    ($0 & 0b00000010) != 0,
-                    ($0 & 0b00000100) != 0,
-                    ($0 & 0b00001000) != 0,
-                    ($0 & 0b00010000) != 0,
-                    ($0 & 0b00100000) != 0,
-                    ($0 & 0b01000000) != 0,
-                    ($0 & 0b10000000) != 0,
-                ]
-            }.joined()
-        )
+        return Array(string.utf8.map { bits(of: $0) }.joined())
     }
     
-    public static func string(of bits: [Bool]) -> String {
+    public static func bits(of byte: UInt8) -> [Bool] {
+        return [
+            (byte & 0b00000001) != 0,
+            (byte & 0b00000010) != 0,
+            (byte & 0b00000100) != 0,
+            (byte & 0b00001000) != 0,
+            (byte & 0b00010000) != 0,
+            (byte & 0b00100000) != 0,
+            (byte & 0b01000000) != 0,
+            (byte & 0b10000000) != 0,
+        ]
+    }
+    
+    public static func bytes(of bits: [Bool]) -> [UInt8] {
         var bytes: [UInt8] = []
         for byteIndex in 0..<(bits.count / UInt8.bitWidth) {
             let bit0Mask: UInt8 = bits[byteIndex * UInt8.bitWidth + 0] ? 0b00000001 : 0
@@ -221,6 +221,10 @@ extension System {
             let byte: UInt8 = bit0Mask | bit1Mask | bit2Mask | bit3Mask | bit4Mask | bit5Mask | bit6Mask | bit7Mask
             bytes.append(byte)
         }
-        return String(decoding: bytes, as: UTF8.self)
+        return bytes
+    }
+    
+    public static func string(of bits: [Bool]) -> String {
+        return String(decoding: bytes(of: bits), as: UTF8.self)
     }
 }

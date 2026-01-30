@@ -88,6 +88,103 @@ extension ACIA6551 {
     static let rsCountMask: UInt8 = 0b00001111
 }
 
+// MARK: - Control Register Bits & Interpretation
+
+extension ACIA6551 {
+    static let ctlBaudRateMask: UInt8 = 0b00001111
+    static let ctlBaudRateShift: UInt8 = 0
+    static let ctlClockSourceMask: UInt8 = 0b00010000
+    static let ctlWordLengthMask: UInt8 = 0b01100000
+    static let ctlWordLengthShift: UInt8 = 5
+    static let ctlStopBitNumberMask: UInt8 = 0b10000000
+}
+
+extension ACIA6551 {
+    public enum BaudRate: Double {
+        case r50 = 50
+        case r75 = 75
+        case r109p92 = 109.92
+        case r134p58 = 134.58
+        case r150 = 150
+        case r300 = 300
+        case r600 = 600
+        case r1200 = 1200
+        case r1800 = 1800
+        case r2400 = 2400
+        case r3600 = 3600
+        case r4800 = 4800
+        case r7200 = 7200
+        case r9600 = 9600
+        case r19200 = 19200
+        case r115200 = 115200
+    }
+    
+    public var baudRate: BaudRate {
+        let setting = (ctl & ACIA6551.ctlBaudRateMask) >> ACIA6551.ctlBaudRateShift
+        switch setting & 0b1111 {
+        case 0: return .r115200
+        case 1: return .r50
+        case 2: return .r75
+        case 3: return .r109p92
+        case 4: return .r134p58
+        case 5: return .r150
+        case 6: return .r300
+        case 7: return .r600
+        case 8: return .r1200
+        case 9: return .r1800
+        case 10: return .r2400
+        case 11: return .r3600
+        case 12: return .r4800
+        case 13: return .r7200
+        case 14: return .r9600
+        default: return .r19200
+        }
+    }
+}
+
+extension ACIA6551 {
+    public var receiverClockSourceMatchTransmitter: Bool {
+        let setting = (ctl & ACIA6551.ctlClockSourceMask)
+        return setting == 0 ? false : true
+    }
+}
+
+extension ACIA6551 {
+    public enum WordLength: Int {
+        case l5 = 5
+        case l6 = 6
+        case l7 = 7
+        case l8 = 8
+    }
+    
+    public var wordLength: WordLength {
+        let setting = (ctl & ACIA6551.ctlWordLengthMask) >> ACIA6551.ctlWordLengthShift
+        switch setting & 0b11 {
+        case 0: return .l5
+        case 1: return .l6
+        case 2: return .l7
+        default: return .l8
+        }
+    }
+}
+
+extension ACIA6551 {
+    public enum StopBits: Double {
+        case s1 = 1
+        case s1p5 = 1.5
+        case s2 = 2
+    }
+    
+    public var stopBits: StopBits {
+        let setting = (ctl & ACIA6551.ctlStopBitNumberMask)
+        switch (setting == 0, wordLength) {
+        case (true, _): return .s1
+        case (false, .l5): return .s1p5
+        case (false, _): return .s2
+        }
+    }
+}
+
 // MARK: - Register Addressing
 
 extension ACIA6551 {
@@ -160,17 +257,18 @@ extension ACIA6551 {
 
 extension ACIA6551 {
     public mutating func receiveBit(receive: () -> Bool) {
+        // Read the status of the receive registers
+        var rsCount = UInt8(rs & ACIA6551.rsCountMask)
+        
         // Receive the bit and shift it into the Receive Shift Register
         let bit = receive()
         rsr = (rsr >> 1) | (bit ? 0b10000000 : 0b00000000)
-        
-        // Read the status of the receive registers
-        var rsCount = UInt8(rs & ACIA6551.rsCountMask)
+        rsCount = min(8, rsCount + 1)
         
         // Increment the count of received bits in the RSR
         // When the RSR is full, transfer it to the RDR
         // On transfer, if the data in the RDR had not been read yet, set the overrun flag
-        if rsCount == 7 {
+        if rsCount == 8 {
             rdr = rsr
             rsr = 0b00000000
             if (sr & ACIA6551.srRDRFullMask) != 0 {
@@ -178,9 +276,9 @@ extension ACIA6551 {
             }
             sr = sr | ACIA6551.srRDRFullMask
             rsCount = 0
-        } else {
-            rsCount += 1
         }
+        
+        // Update the status of the receive registers
         rs = (rs & ~ACIA6551.rsCountMask) | (rsCount & ACIA6551.rsCountMask)
     }
     
@@ -191,16 +289,19 @@ extension ACIA6551 {
         // Decrement the count of bits-to-transmit in the TSR
         // When the TSR is empty, it is logical to transfer the TDR to it, but that is not how the W65C51 works
         // Instead, the TSR and TDR are written at the same time, and SR bit 5 is never 0
-        ts = (ts & ~ACIA6551.tsCountMask) | (tsCount & ACIA6551.tsCountMask)
-        if (tsCount == 0) {
-            tsCount = 7
-        } else {
-            tsCount -= 1
+        if tsCount == 0 {
+            //sr = sr | ACIA6551.srTDREmptyMask
+            //tsr = tdr
+            //tdr = 0b00000000
         }
         
         // Shift the bit to transmit out of the Transmit Shift Register and transmit it
         let bit = (tsr & 0b1) != 0
         tsr = tsr >> 1
         transmit(bit)
+        tsCount = max(0, tsCount - 1)
+        
+        // Update the status of the receive registers
+        ts = (ts & ~ACIA6551.tsCountMask) | (tsCount & ACIA6551.tsCountMask)
     }
 }
