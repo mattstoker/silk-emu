@@ -20,6 +20,7 @@ A bread-board based hardware implementation of this system is excellently presen
 
 ```
 git clone https://github.com/mattstoker/silk-emu.git
+cd silk-emu
 swift run
 ```
 
@@ -31,8 +32,7 @@ The emulator includes sample software written in 6502 assembly in the ROM direct
   - `swift run silk-emu ROM/hello.bin --print-lcd`
 * serial.s - A serial read/echo program that receives input and re-transmits it
   - `swift run silk-emu ROM/serial.bin --acia-transmit-file /dev/stdin --acia-receive-file /dev/stdout`
-* cgol.s - A simulation of Conway's Game of Life that can be viewed via VGA
+* cgol.s - A simulation of Conway's Game of Life that can be viewed via screenshot or VGA
   - `swift run silk-emu ROM/cgol.bin --screenshot-frequency 1000000 --screenshot-start-address 8192 --screenshot-end-address 16383`
 * jamantaos.s - An operating system style program for LCD, Serial, and VGA interfacing
-  - `swift run silk-emu ROM/jamantaos.bin --print-lcd`
-  - Use one of the GUIs to run this most effectively
+  - Use one of the GUIs to run this and interact with button pad for control

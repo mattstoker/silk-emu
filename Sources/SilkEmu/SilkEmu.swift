@@ -11,45 +11,46 @@ import SilkCPU
 
 @main
 struct SilkEmu: ParsableCommand {
-    @Argument()
+    static let configuration = CommandConfiguration(
+        abstract: "6502-based computer system emulator."
+    )
+    
+    @Argument(help: "Program to load into memory. Ensure the program has the desired initial program counter address stored at 0xFFFE.")
     var programFile: String
     
-    @Option
+    @Option(help: "Memory offset to use to load the input program into memory.")
     var programOffset: Int = 0
     
-    @Option
+    @Option(help: "Frequency at which clock cycles should be fed to the system (in cycles / sec).")
     var clockFrequency: Double = 1_000_000.0
     
-    @Option
+    @Option(help: "Ratio of wall-clock time to clock cycle time to use in simulation.")
     var realtimeRatio: Double = 1.0 / 1.0
     
-    @Option
+    @Option(help: "File to use as input to the ACIA hardware. Use /dev/stdin (or OS equivalent) to interactively provide data.")
     var aciaTransmitFile: String? = nil
     
-    @Option
+    @Option(help: "File to use as output from the ACIA hardware. Use /dev/stdout (or OS equivalent) to print output to the console.")
     var aciaReceiveFile: String? = nil
     
-    @Option
+    @Option(help: "Frequency to take screenshots of memory, simulating a VGA attached to the system.")
     var screenshotFrequency: Int = 0
     
-    @Option
+    @Option(help: "Start address for memory screenshots. Many programs start VGA at 8192 (0x2000).")
     var screenshotStartAddress: Int = 0x0000
     
-    @Option
+    @Option(help: "End address for memory screenshots. Many programs end VGA at 16383 (0x3FFF).")
     var screenshotEndAddress: Int = 0xFFFF
     
-    @Option
+    @Option(help: "Width of memory screenshot, in bytes.")
     var screenshotWidth: Int = 0x80
     
-    @Flag
+    @Flag(help: "Print the CPU registers and current program opcode & operand.")
     var printState: Bool = false
     
-    @Flag
+    @Flag(help: "Print changes to the LCD DDRAM.")
     var printLCD: Bool = false
-    
-    @Flag
-    var printRate: Bool = false
-    
+
     mutating func run() throws {
         // Load the provided program
         let programData = try Data(contentsOf: URL(fileURLWithPath: programFile))
