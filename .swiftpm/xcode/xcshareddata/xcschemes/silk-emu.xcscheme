@@ -31,9 +31,9 @@
       shouldAutocreateTestPlan = "YES">
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Release"
-      selectedDebuggerIdentifier = ""
-      selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn"
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
@@ -52,20 +52,28 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
+            argument = "/Users/Matt/Engineering/Generic/SilkEmu/ROM/hello.bin"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "/Users/Matt/Engineering/Generic/SilkEmu/ROM/serial.bin"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "/Users/Matt/Engineering/Generic/SilkEmu/ROM/jamantaos.bin"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--acia-transmit-file /Users/Matt/Engineering/Generic/SilkEmu/in.txt"
-            isEnabled = "YES">
+            argument = "--acia-transmit-file /dev/stdin"
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--acia-receive-file /dev/stdout"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--print-state"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--print-lcd"
@@ -76,7 +84,11 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--clock-frequency 1"
+            argument = "--clock-frequency 100000"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--screenshot-frequency 10000000"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

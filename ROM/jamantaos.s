@@ -1154,7 +1154,7 @@ serial_transmit_delay:
   pla
   rts
 
-; Print message to LCD
+; Print message to the serial interface, waiting for the data to be transmitted
 ; - Parameters
 ;   * X(LO),Y(HI): Pointer to Null-terminated Message
 ; - Return

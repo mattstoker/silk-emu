@@ -47,6 +47,9 @@ struct SilkEmu: ParsableCommand {
     @Flag
     var printLCD: Bool = false
     
+    @Flag
+    var printRate: Bool = false
+    
     mutating func run() throws {
         // Load the provided program
         let programData = try Data(contentsOf: URL(fileURLWithPath: programFile))
@@ -93,14 +96,14 @@ struct SilkEmu: ParsableCommand {
                     transmitQueue.append(contentsOf: System.bits(of: byte))
                 }
             }
-            if abs(transmitTime - time) > 1.0 / system.acia.baudRate.rawValue, let bit = transmitQueue.first {
+            if abs(transmitTime - time) > 100.0 / system.acia.baudRate.rawValue, let bit = transmitQueue.first {
                 transmitQueue.removeFirst()
                 system.acia.receiveBit() { bit }
                 transmitTime = time
             }
             
             // Receive data via the ACIA
-            if abs(receiveTime - time) > 1.0 / system.acia.baudRate.rawValue, system.acia.ts > 0 {
+            if abs(receiveTime - time) > 100.0 / system.acia.baudRate.rawValue, system.acia.ts > 0 {
                 var bit = false
                 system.acia.transmitBit() { bit = $0 }
                 receiveQueue.append(bit)
@@ -130,7 +133,13 @@ struct SilkEmu: ParsableCommand {
                     print(lcd)
                 }
             }
-                
+            
+            // Print instruction execution frequency
+//            if instructionsExecuted % 100_000 == 0 {
+//                let frequency = Double(cyclesExecuted) / abs(executionBegin.timeIntervalSinceNow)
+//                print("Executed: \(instructionsExecuted) / \(cyclesExecuted)  Frequency: \(frequency / 1_000_000) MHz")
+//            }
+            
             // Take memory screenshots, if requested
             if screenshotFrequency > 0 && instructionsExecuted % screenshotFrequency == 0 {
                 let screenshot = system.memoryPPM(start: UInt16(screenshotStartAddress), end: UInt16(screenshotEndAddress), line: UInt16(screenshotWidth))
@@ -143,11 +152,6 @@ struct SilkEmu: ParsableCommand {
             let timeDifference = targetTime.timeIntervalSinceNow
             if timeDifference > 0.0001 {
                 Thread.sleep(until: targetTime)
-            }
-            
-            if instructionsExecuted % 100_000 == 0 {
-                let frequency = Double(cyclesExecuted) / abs(executionBegin.timeIntervalSinceNow)
-                print("Executed: \(instructionsExecuted) / \(cyclesExecuted)  Frequency: \(frequency / 1_000_000) MHz")
             }
         }
     }

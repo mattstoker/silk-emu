@@ -1,3 +1,18 @@
+; Serial
+; Serial Communication Demonstration for the W65C02 CPU and W65C51N ACIA
+;
+; Assemble using a W65C02 compatible assembler (such as vasm):
+; ./vasm6502_oldstyle -Fbin -dotdir serial.s && hexdump -v -e '16/1 "0x%02x, "' -e '"\n"' a.out
+;
+; This program utilizes the W65C02 CPU and W65C22 Versitile Interface Adapter (VIA) to communicate
+; with a W65C51N Asynchronous Communications Interface Adapter (ACIA) and HD44780U LCD.
+; The program first initalizes the LCD and ACIA using the VIA Ports A & B. It then enters a loop
+; where the ACIA is queried for data, the result displayed on the LCD, and the data echoed on the ACIA.
+;
+; Serial communcation is configured for 19200 baud N81. If another baud rate is needed, the serial
+; wait loop should be reconfigured to wait for more or less time to accomodate the write time needed.
+;
+
 ; Device Address Map
 ; $0000 to $3fff - RAM HM62256
 ; $4000 to $4fff - Unmapped
@@ -11,8 +26,7 @@
 ZERO_PAGE     = $0000 ; to $00ff - CPU Zero Page
 STACK         = $0100 ; to $01ff - CPU Stack Memory
 RAM           = $0200 ; to $1fff - General Purpose Memory
-VIDEO         = $2000 ; to $3fff - VGA Memory
-;               $4000   to $4fff - Unmapped
+;               $2000   to $4fff - Unmapped
 UART_DATA     = $5000 ;          - Serial UART Data Registers (R/W Signal: R - Receive / W - Send)
 UART_STATUS   = $5001 ;          - Serial UART Status Register
 UART_CMD      = $5002 ;          - Serial UART Command Register
@@ -24,7 +38,6 @@ DDRB          = $6002 ;          - VIA Data Direction Register for Port B
 DDRA          = $6003 ;          - VIA Data Direction Register for Port A
 ;               $6004   to $dfff - Unmapped
 EEPROM        = $e000 ; to $fff9 - Program Memory (read-only)
-EEPROM_IRQ    = $f000 ; to $fff9 - Program Memory (read-only)
 NMIB_VEC      = $fffa ; to $fffb - CPU Non-Maskable Interrupt Vector
 RESB_VEC      = $fffc ; to $fffd - CPU Reset Vector (holds initial value of program counter)
 IRQB_VEC      = $fffe ; to $ffff - CPU Interrupt Request Vector
@@ -33,15 +46,7 @@ IRQB_VEC      = $fffe ; to $ffff - CPU Interrupt Request Vector
 LCD_E       = %10000000
 LCD_RW      = %01000000
 LCD_RS      = %00100000
-UP_BTN      = %00000001
-LEFT_BTN    = %00000010
-RIGHT_BTN   = %00000100
-DOWN_BTN    = %00001000
-ACTION_BTN  = %00010000
-
-; RAM Allocation
-null                 = $0000 ; 2 bytes
-scratch              = $0002 ; 2 bytes
+;UNUSED     = %00011111
 
 ; Program Code
   .org EEPROM
@@ -131,11 +136,11 @@ print_char:
 
 serial_write:
   sta UART_DATA          ; Write data to be sent to the serial send register
-;serial_write_wait:
-;  ldx #100
-;serial_write_delay:
-;  dex
-;  bne serial_write_delay ; Loop for 100 iterations, which lasts long enough @ 1MHz @ 19200 to transmit
+serial_write_wait:
+  ldx #100
+serial_write_delay:
+  dex
+  bne serial_write_delay ; Loop for 100 iterations, which lasts long enough @ 1MHz @ 19200 to transmit
 
   jmp serial_read
 
@@ -151,9 +156,7 @@ error:
   tya
   jmp error
 
-.org
-
-; CPU Vector Locations
+; CPU Initialization Vector Locations
   .org NMIB_VEC
   .word $0000
   .org RESB_VEC

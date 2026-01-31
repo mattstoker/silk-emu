@@ -4,6 +4,9 @@
 //
 //  Created by Matt Stoker on 1/18/26.
 //
+//  Official documentation for the HM62256 can be found at:
+//  https://ww1.microchip.com/downloads/en/DeviceDoc/doc0270.pdf
+//
 
 // MARK: ROM State & Equality
 

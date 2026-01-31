@@ -4,6 +4,9 @@
 //
 //  Created by Matt Stoker on 1/18/26.
 //
+//  Official documentation for the HM62256 can be found at:
+//  https://web.mit.edu/6.115/www/document/62256.pdf
+//
 
 // MARK: RAM State & Equality
 

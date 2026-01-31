@@ -1,13 +1,37 @@
-PORTB = $6000
-PORTA = $6001
-DDRB = $6002
-DDRA = $6003
+; Hello
+; Liquid Crystal Display Communication Demonstration for the W65C02 CPU and HD44780U LCD
+;
+; Assemble using a W65C02 compatible assembler (such as vasm):
+; ./vasm6502_oldstyle -Fbin -dotdir hello.s && hexdump -v -e '16/1 "0x%02x, "' -e '"\n"' a.out
+;
+; This program utilizes the W65C02 CPU and W65C22 Versitile Interface Adapter (VIA) to communicate
+; with a HD44780U LCD. The program first initalizes the LCD using the VIA Ports A & B. It then enters a
+; loop that prints a message to the LCD, followed by looping forever.
+;
 
-E  = %10000000
-RW = %01000000
-RS = %00100000
+; Device Hardware Address Map
+ZERO_PAGE     = $0000 ; to $00ff - CPU Zero Page
+STACK         = $0100 ; to $01ff - CPU Stack Memory
+RAM           = $0200 ; to $1fff - General Purpose Memory
+;               $2000   to $5fff - Unmapped
+PORTB         = $6000 ;          - VIA Port B
+PORTA         = $6001 ;          - VIA Port A
+DDRB          = $6002 ;          - VIA Data Direction Register for Port B
+DDRA          = $6003 ;          - VIA Data Direction Register for Port A
+;               $6004   to $dfff - Unmapped
+EEPROM        = $e000 ; to $fff9 - Program Memory (read-only)
+NMIB_VEC      = $fffa ; to $fffb - CPU Non-Maskable Interrupt Vector
+RESB_VEC      = $fffc ; to $fffd - CPU Reset Vector (holds initial value of program counter)
+IRQB_VEC      = $fffe ; to $ffff - CPU Interrupt Request Vector
 
-  .org $e000
+; Port A pins
+LCD_E       = %10000000
+LCD_RW      = %01000000
+LCD_RS      = %00100000
+;UNUSED     = %00011111
+
+; Program Code
+  .org EEPROM
 
 reset:
   ldx #$ff
@@ -38,22 +62,20 @@ print:
 loop:
   jmp loop
 
-message: .asciiz "Hello, world!"
-
 lcd_wait:
   pha
   lda #%00000000  ; Port B is input
   sta DDRB
 lcdbusy:
-  lda #RW
+  lda #LCD_RW
   sta PORTA
-  lda #(RW | E)
+  lda #(LCD_RW | LCD_E)
   sta PORTA
   lda PORTB
   and #%10000000
   bne lcdbusy
 
-  lda #RW
+  lda #LCD_RW
   sta PORTA
   lda #%11111111  ; Port B is output
   sta DDRB
@@ -65,7 +87,7 @@ lcd_instruction:
   sta PORTB
   lda #0         ; Clear RS/RW/E bits
   sta PORTA
-  lda #E         ; Set E bit to send instruction
+  lda #LCD_E         ; Set E bit to send instruction
   sta PORTA
   lda #0         ; Clear RS/RW/E bits
   sta PORTA
@@ -74,13 +96,15 @@ lcd_instruction:
 print_char:
   jsr lcd_wait
   sta PORTB
-  lda #RS         ; Set RS; Clear RW/E bits
+  lda #LCD_RS         ; Set RS; Clear RW/E bits
   sta PORTA
-  lda #(RS | E)   ; Set E bit to send instruction
+  lda #(LCD_RS | LCD_E)   ; Set E bit to send instruction
   sta PORTA
-  lda #RS         ; Clear E bits
+  lda #LCD_RS         ; Clear E bits
   sta PORTA
   rts
+
+message: .asciiz "Hello, world!"
 
   .org $fffc
   .word reset
