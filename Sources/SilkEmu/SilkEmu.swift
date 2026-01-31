@@ -7,6 +7,7 @@
 import ArgumentParser
 import Foundation
 import SilkSystem
+import SilkCPU
 
 @main
 struct SilkEmu: ParsableCommand {
@@ -62,6 +63,7 @@ struct SilkEmu: ParsableCommand {
         
         // Execution loop
         var instructionsExecuted = 0
+        var cyclesExecuted = 0
         let executionBegin = Date()
         var transmitTime = 0.0
         var transmitQueue = [Bool]()
@@ -72,16 +74,15 @@ struct SilkEmu: ParsableCommand {
             // Execute an instruction
             switch system.cpu.state {
             case .boot, .run:
-                system.execute()
-            case .wait:
-                ()
-            case .stop:
-                ()
+                let execution = system.execute()
+                instructionsExecuted += 1
+                cyclesExecuted += Int(execution.instruction.cycles)
+            case .wait, .stop:
+                cyclesExecuted += Int(CPU6502.Instruction.NOP_impl.cycles)
             }
-            instructionsExecuted += 1
             
             // Keep track of the simulated time and real-time that have elapsed
-            let time = Double(instructionsExecuted) / clockFrequency
+            let time = Double(cyclesExecuted) / clockFrequency
             //let realtime = abs(executionBegin.timeIntervalSinceNow)
             
             // Transmit data via the ACIA
@@ -144,9 +145,10 @@ struct SilkEmu: ParsableCommand {
                 Thread.sleep(until: targetTime)
             }
             
-//            if instructionsExecuted % 100_000 == 0 {
-//                print("Executed: \(instructionsExecuted)  Rate: \(Double(instructionsExecuted) / abs(executionBegin.timeIntervalSinceNow) / 1_000_000) MHz")
-//            }
+            if instructionsExecuted % 100_000 == 0 {
+                let frequency = Double(cyclesExecuted) / abs(executionBegin.timeIntervalSinceNow)
+                print("Executed: \(instructionsExecuted) / \(cyclesExecuted)  Frequency: \(frequency / 1_000_000) MHz")
+            }
         }
     }
 }

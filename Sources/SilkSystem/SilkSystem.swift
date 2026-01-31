@@ -126,7 +126,11 @@ public class System {
         rom.program(data: data, startingAt: offset)
     }
     
-    public func execute(count: Int = 1) {
+    public func execute(count: Int = 1) -> (instruction: CPU6502.Instruction, oper: UInt8?, operWideHigh: UInt8?) {
+        return cpu.execute()
+    }
+    
+    public func execute(count: Int) {
         for _ in 0..<count {
             cpu.execute()
         }

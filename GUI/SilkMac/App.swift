@@ -159,7 +159,7 @@ struct SystemView: View {
                         HStack {
                             Button(
                                 action: {
-                                    system.executePublished(upTo: 0x20 /*JSR*/)
+                                    system.executePublished(upTo: CPU6502.Instruction.JSR_abs.opcode)
                                     log += "\(system.cpu.debugDescription)\n"
                                 },
                                 label: { Text("Step Until Next JSR") }
@@ -168,7 +168,7 @@ struct SystemView: View {
                         HStack {
                             Button(
                                 action: {
-                                    system.executePublished(upTo: 0x60 /*RTS*/)
+                                    system.executePublished(upTo: CPU6502.Instruction.RTS_impl.opcode)
                                     system.executePublished()
                                     log += "\(system.cpu.debugDescription)\n"
                                 },
