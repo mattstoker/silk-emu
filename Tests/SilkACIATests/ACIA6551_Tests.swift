@@ -95,17 +95,17 @@ struct ACIA6551Tests {
         let message: [UInt8] = "This is a test".utf8.map { UInt8($0) }
         var messageBitIndex = 0
         let messageBitCount = message.count * UInt8.bitWidth
-        var acia = ACIA6551(receive: {
-            let messageByteIndex = messageBitIndex / UInt8.bitWidth
-            let messageBitMask = UInt8(1 << (messageBitIndex % UInt8.bitWidth))
-            let bit = (message[messageByteIndex] & messageBitMask) != 0
-            messageBitIndex += 1
-            return bit
-        })
+        var acia = ACIA6551()
         
         var receivedMessage: [UInt8] = []
         while messageBitIndex < messageBitCount {
-            acia.receiveBit()
+            acia.receiveBit() {
+                let messageByteIndex = messageBitIndex / UInt8.bitWidth
+                let messageBitMask = UInt8(1 << (messageBitIndex % UInt8.bitWidth))
+                let bit = (message[messageByteIndex] & messageBitMask) != 0
+                messageBitIndex += 1
+                return bit
+            }
             let rdrFull = (acia.read(address: ACIA6551.Register.SR.rawValue) & ACIA6551.srRDRFullMask) != 0
             if rdrFull {
                 let byte = acia.read(address: ACIA6551.Register.DATA.rawValue)
@@ -118,23 +118,23 @@ struct ACIA6551Tests {
     @Test func transmit() {
         var transmittedMessage: [UInt8] = []
         var transmittedMessageBitIndex = 0
-        var acia = ACIA6551(transmit: { bit in
-            let transmittedMessageByteIndex = transmittedMessageBitIndex / UInt8.bitWidth
-            let transmittedMessageBitMask = UInt8(1 << (transmittedMessageBitIndex % UInt8.bitWidth))
-            if transmittedMessage.count <= transmittedMessageByteIndex {
-                transmittedMessage.append(0b00000000)
-            }
-            if bit {
-                transmittedMessage[transmittedMessageByteIndex] = transmittedMessage[transmittedMessageByteIndex] | transmittedMessageBitMask
-            }
-            transmittedMessageBitIndex += 1
-        })
+        var acia = ACIA6551()
         
         let message: [UInt8] = "This is a test".utf8.map { UInt8($0) }
         for byte in message {
             acia.write(address: ACIA6551.Register.DATA.rawValue, data: byte)
             for _ in 0..<UInt8.bitWidth {
-                acia.transmitBit()
+                acia.transmitBit() { bit in
+                    let transmittedMessageByteIndex = transmittedMessageBitIndex / UInt8.bitWidth
+                    let transmittedMessageBitMask = UInt8(1 << (transmittedMessageBitIndex % UInt8.bitWidth))
+                    if transmittedMessage.count <= transmittedMessageByteIndex {
+                        transmittedMessage.append(0b00000000)
+                    }
+                    if bit {
+                        transmittedMessage[transmittedMessageByteIndex] = transmittedMessage[transmittedMessageByteIndex] | transmittedMessageBitMask
+                    }
+                    transmittedMessageBitIndex += 1
+                }
             }
         }
         
