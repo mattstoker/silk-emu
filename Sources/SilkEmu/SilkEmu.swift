@@ -28,10 +28,10 @@ struct SilkEmu: ParsableCommand {
     var realtimeRatio: Double = 1.0 / 1.0
     
     @Option(help: "File to use as input to the ACIA hardware. Use /dev/stdin (or OS equivalent) to interactively provide data.")
-    var aciaTransmitFile: String? = nil
+    var aciaReceiveFile: String? = nil
     
     @Option(help: "File to use as output from the ACIA hardware. Use /dev/stdout (or OS equivalent) to print output to the console.")
-    var aciaReceiveFile: String? = nil
+    var aciaTransmitFile: String? = nil
     
     @Option(help: "Frequency to take screenshots of memory, simulating a VGA attached to the system.")
     var screenshotFrequency: Int = 0
@@ -62,17 +62,17 @@ struct SilkEmu: ParsableCommand {
         system.program(data: program, startingAt: 0x0000)
         
         // Open files being used for ACIA transmit / receive
-        let aciaTransmitStream = aciaTransmitFile.map { fopen($0, "r") } ?? nil
-        let aciaReceiveStream = aciaReceiveFile.map { fopen($0, "a") } ?? nil
+        let aciaReceiveStream = aciaReceiveFile.map { fopen($0, "r") } ?? nil
+        let aciaTransmitStream = aciaTransmitFile.map { fopen($0, "a") } ?? nil
         
         // Execution loop
         var instructionsExecuted = 0
         var cyclesExecuted = 0
         let executionBegin = Date()
-        var transmitTime = 0.0
-        var transmitQueue = [Bool]()
         var receiveTime = 0.0
         var receiveQueue = [Bool]()
+        var transmitTime = 0.0
+        var transmitQueue = [Bool]()
         var displayedLCD = ""
         while true {
             // Execute an instruction
@@ -89,35 +89,35 @@ struct SilkEmu: ParsableCommand {
             let time = Double(cyclesExecuted) / clockFrequency
             //let realtime = abs(executionBegin.timeIntervalSinceNow)
             
-            // Transmit data via the ACIA
-            if let aciaTransmitStream = aciaTransmitStream, transmitQueue.isEmpty {
-                let c = fgetc(aciaTransmitStream)
+            // Receive data via the ACIA
+            if let aciaReceiveStream = aciaReceiveStream, receiveQueue.isEmpty {
+                let c = fgetc(aciaReceiveStream)
                 if c != EOF {
                     let byte = UInt8(c)
-                    transmitQueue.append(contentsOf: System.bits(of: byte))
+                    receiveQueue.append(contentsOf: System.bits(of: byte))
                 }
             }
-            if abs(transmitTime - time) > 100.0 / system.acia.baudRate.rawValue, let bit = transmitQueue.first {
-                transmitQueue.removeFirst()
+            if abs(receiveTime - time) > 100.0 / system.acia.baudRate.rawValue, let bit = receiveQueue.first {
+                receiveQueue.removeFirst()
                 system.acia.receiveBit() { bit }
-                transmitTime = time
-            }
-            
-            // Receive data via the ACIA
-            if abs(receiveTime - time) > 100.0 / system.acia.baudRate.rawValue, system.acia.ts > 0 {
-                var bit = false
-                system.acia.transmitBit() { bit = $0 }
-                receiveQueue.append(bit)
                 receiveTime = time
             }
-            if let aciaReceiveStream = aciaReceiveStream, receiveQueue.count >= UInt8.bitWidth {
-                let bits = Array(receiveQueue[..<UInt8.bitWidth])
-                receiveQueue.removeFirst(UInt8.bitWidth)
+            
+            // Transmit data via the ACIA
+            if abs(transmitTime - time) > 100.0 / system.acia.baudRate.rawValue, system.acia.ts > 0 {
+                var bit = false
+                system.acia.transmitBit() { bit = $0 }
+                transmitQueue.append(bit)
+                transmitTime = time
+            }
+            if let aciaTransmitStream = aciaTransmitStream, transmitQueue.count >= UInt8.bitWidth {
+                let bits = Array(transmitQueue[..<UInt8.bitWidth])
+                transmitQueue.removeFirst(UInt8.bitWidth)
                 let byte = System.bytes(of: bits)[0]
                 if byte != 0 {
                     let c = Int32(byte)
-                    fputc(c, aciaReceiveStream)
-                    fflush(aciaReceiveStream)
+                    fputc(c, aciaTransmitStream)
+                    fflush(aciaTransmitStream)
                 }
             }
             

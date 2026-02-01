@@ -31,7 +31,7 @@ The emulator includes sample software written in 6502 assembly in the ROM direct
 * hello.s - A hello-world style program that prints to the LCD
   - `swift run silk-emu ROM/hello.bin --print-lcd`
 * serial.s - A serial read/echo program that receives input and re-transmits it
-  - `swift run silk-emu ROM/serial.bin --acia-transmit-file /dev/stdin --acia-receive-file /dev/stdout`
+  - `swift run silk-emu ROM/serial.bin --acia-receive-file /dev/stdin --acia-transmit-file /dev/stdout`
 * cgol.s - A simulation of Conway's Game of Life that can be viewed via screenshot or VGA
   - `swift run silk-emu ROM/cgol.bin --screenshot-frequency 1000000 --screenshot-start-address 8192 --screenshot-end-address 16383`
 * jamantaos.s - An operating system style program for LCD, Serial, and VGA interfacing

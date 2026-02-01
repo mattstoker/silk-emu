@@ -57,19 +57,19 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/Matt/Engineering/Generic/SilkEmu/ROM/serial.bin"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "/Users/Matt/Engineering/Generic/SilkEmu/ROM/jamantaos.bin"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--acia-transmit-file /dev/stdin"
+            argument = "/Users/Matt/Engineering/Generic/SilkEmu/ROM/jamantaos.bin"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--acia-receive-file /dev/stdout"
-            isEnabled = "NO">
+            argument = "--acia-receive-file /dev/stdin"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--acia-transmit-file /dev/stdout"
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--print-state"
@@ -89,7 +89,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--screenshot-frequency 10000000"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
    </LaunchAction>
