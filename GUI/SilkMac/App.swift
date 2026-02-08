@@ -75,23 +75,30 @@ struct SystemView: View {
             VStack {
                 TextEditor(text: $log)
                     .font(.system(size: 12.0, design: .monospaced))
-                Table(programDisassembly) {
-                    TableColumn("Addr") {
-                        Text(String(format: "%04X", $0.address))
+                ScrollViewReader { proxy in
+                    Table(programDisassembly) {
+                        TableColumn("Addr") {
+                            Text(String(format: "%04X\($0.address == system.cpu.pc ? "*" : "")", $0.address))
+                        }
+                        .width(44.0)
+                        TableColumn("Inst") {
+                            Text($0.instruction.name)
+                        }
+                        .width(40.0)
+                        TableColumn("OL") {
+                            Text($0.oper.map { String(format: "%02X", $0) } ?? "--")
+                        }
+                        .width(22.0)
+                        TableColumn("OH") {
+                            Text($0.operWideHigh.map { String(format: "%02X", $0) } ?? "--")
+                        }
+                        .width(22.0)
                     }
-                    .width(40.0)
-                    TableColumn("Inst") {
-                        Text($0.instruction.name)
+                    .onChange(of: system.cpu.pc) { newValue, _ in
+                        withAnimation {
+                            proxy.scrollTo(newValue, anchor: .center)
+                        }
                     }
-                    .width(40.0)
-                    TableColumn("OL") {
-                        Text($0.oper.map { String(format: "%02X", $0) } ?? "--")
-                    }
-                    .width(22.0)
-                    TableColumn("OH") {
-                        Text($0.operWideHigh.map { String(format: "%02X", $0) } ?? "--")
-                    }
-                    .width(22.0)
                 }
                 HStack {
                     Toggle("Video View", isOn: $showVideo)
@@ -251,6 +258,7 @@ struct SystemView: View {
                             system.objectWillChange.send()
                             aciaDataReceiveQueue = ""
                             aciaDataTransmitQueue = ""
+                            programDisassembly = []
                             log = ""
                         },
                         label: { Text("Reset") }
