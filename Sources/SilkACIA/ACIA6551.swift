@@ -263,7 +263,7 @@ extension ACIA6551 {
         // Receive the bit and shift it into the Receive Shift Register
         let bit = receive()
         rsr = (rsr >> 1) | (bit ? 0b10000000 : 0b00000000)
-        rsCount = min(8, rsCount + 1)
+        rsCount = rsCount == 8 ? 8 : rsCount + 1
         
         // Increment the count of received bits in the RSR
         // When the RSR is full, transfer it to the RDR
@@ -299,7 +299,7 @@ extension ACIA6551 {
         let bit = (tsr & 0b1) != 0
         tsr = tsr >> 1
         transmit(bit)
-        tsCount = max(0, tsCount - 1)
+        tsCount = tsCount == 0 ? 0 : tsCount - 1
         
         // Update the status of the receive registers
         ts = (ts & ~ACIA6551.tsCountMask) | (tsCount & ACIA6551.tsCountMask)

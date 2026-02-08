@@ -50,7 +50,7 @@ public struct CPU6502 {
         self.yr = yr
         self.sr = sr
         self.sp = sp
-        self.state = .boot
+        self.state = state
         self.load = load
         self.store = store
     }
@@ -510,7 +510,7 @@ extension CPU6502 {
         
         let opcode = load(absolute: pc)
         let instruction = Instruction(rawValue: opcode)!
-        let oper: UInt8 = instruction.size <= 1 ? 0xAA : load(absolute: pc &+ 1)
+        let oper = instruction.size <= 1 ? 0xAA : load(absolute: pc &+ 1)
         let operWideHigh = instruction.size <= 2 ? 0xBB : load(absolute: pc &+ 2)
         let operWide = UInt16(high: operWideHigh, low: oper)
         pc = pc &+ UInt16(instruction.size)
@@ -773,7 +773,11 @@ extension CPU6502 {
         case .BBS: executeNOP()
         }
         
-        return (instruction: instruction, oper: oper, operWideHigh: operWideHigh)
+        return (
+            instruction: instruction,
+            oper: instruction.size <= 1 ? nil : oper,
+            operWideHigh: instruction.size <= 2 ? nil : operWideHigh
+        )
     }
     
     public mutating func stop() {

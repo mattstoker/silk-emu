@@ -63,6 +63,7 @@ struct SystemView: View {
     @State var aciaDataReceiveQueue: String = ""
     @State var aciaTransmitTimer: Timer? = nil
     @State var aciaDataTransmitQueue: String = ""
+    @State var disassembly: [CPU6502.Operation]
     @State var showVIAState: Bool = false
     @State var showLCDState: Bool = true
     @State var showControlPadState: Bool = true
@@ -134,7 +135,7 @@ struct SystemView: View {
                                         system.executePublished(until: breakpoint)
                                         log += "\(system.cpu.debugDescription)\n"
                                     } else {
-                                        stepTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
+                                        stepTimer = Timer.scheduledTimer(withTimeInterval: 0.0001, repeats: true) { _ in
                                             system.executePublished()
                                         }
                                         log = ""

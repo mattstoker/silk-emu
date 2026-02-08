@@ -25,9 +25,7 @@ public class System {
     
     public init(
         load: ((UInt16) -> UInt8)? = nil,
-        store: ((UInt16, UInt8) -> ())? = nil,
-        aciaTransmit: ((Bool) -> ())? = nil,
-        aciaReceive: (() -> Bool)? = nil
+        store: ((UInt16, UInt8) -> ())? = nil
     ) {
         cpu = CPU6502(load: load ?? { _ in 0xEA }, store: store ?? { _, _ in })
         ram = RAMHM62256()
