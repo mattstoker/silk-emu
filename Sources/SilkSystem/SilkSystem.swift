@@ -15,6 +15,11 @@ import SilkACIA
 import SilkLCD
 
 public class System {
+    public static let ramAddressSpace = (UInt16(0x0000)...UInt16(0x3FFF))
+    public static let aciaAddressSpace = (UInt16(0x4000)...UInt16(0x5FFF))
+    public static let viaAddressSpace = (UInt16(0x6000)...UInt16(0x7FFF))
+    public static let romAddressSpace = (UInt16(0xE000)...UInt16(0xFFFF))
+    
     public var cpu: CPU6502
     public var ram: RAMHM62256
     public var rom: ROMAT28C64B
@@ -23,11 +28,8 @@ public class System {
     public var lcd: LCDHD44780
     public var controlPad: ControlPad
     
-    public init(
-        load: ((UInt16) -> UInt8)? = nil,
-        store: ((UInt16, UInt8) -> ())? = nil
-    ) {
-        cpu = CPU6502(load: load ?? { _ in 0xEA }, store: store ?? { _, _ in })
+    public init() {
+        cpu = CPU6502()
         ram = RAMHM62256()
         rom = ROMAT28C64B()
         via = VIA6522()
@@ -35,20 +37,14 @@ public class System {
         lcd = LCDHD44780()
         controlPad = ControlPad()
         
-        if load == nil && store == nil {
-            useDefaultLoadStore()
-        }
-    }
-    
-    private func useDefaultLoadStore() {
         cpu = CPU6502(
             load: { address in
                 switch address {
-                case (0x0000...0x3FFF):
-                    return self.ram.load(address)
-                case (0x4000...0x5FFF):
+                case System.ramAddressSpace:
+                    return self.ram.load(address - System.ramAddressSpace.lowerBound)
+                case System.aciaAddressSpace:
                     return self.acia.read(address: UInt8(address & 0x0003))
-                case (0x6000...0x7FFF):
+                case System.viaAddressSpace:
                     let lcdrs = (self.via.pa & 0b00100000) != 0
                     let lcdrw = (self.via.pa & 0b01000000) != 0
                     let lcde = (self.via.pa & 0b10000000) != 0
@@ -64,19 +60,19 @@ public class System {
                     (self.controlPad.actionPressed ? 0b00010000 : 0)
                     
                     return self.via.read(address: UInt8(address & 0x000F), paIn: paIn, pbIn: 0x00)
-                case (0xE000...0xFFFF):
-                    return self.rom.load(address - 0xE000)
+                case System.romAddressSpace:
+                    return self.rom.load(address - System.romAddressSpace.lowerBound)
                 default:
                     return 0xEA
                 }
             },
             store: { address, value in
                 switch address {
-                case (0x0000...0x3FFF):
-                    self.ram.store(address, value)
-                case (0x4000...0x5FFF):
+                case System.ramAddressSpace:
+                    self.ram.store(address - System.ramAddressSpace.lowerBound, value)
+                case System.aciaAddressSpace:
                     self.acia.write(address: UInt8(address & 0x0003), data: value)
-                case (0x6000...0x7FFF):
+                case System.viaAddressSpace:
                     self.via.write(address: UInt8(address & 0x000F), data: value)
                     let lcdrs = (self.via.pa & 0b00100000) != 0
                     let lcdrw = (self.via.pa & 0b01000000) != 0
@@ -121,7 +117,15 @@ public class System {
     }
     
     public func program(data: [UInt8], startingAt offset: UInt16) {
-        rom.program(data: data, startingAt: offset)
+        let addresses = Int(offset)..<(Int(offset) + data.count)
+        for address in addresses where System.ramAddressSpace.contains(UInt16(address)) {
+            ram.store(UInt16(address) - System.ramAddressSpace.lowerBound, data[address - Int(offset)])
+        }
+        var romData: [UInt8] = Array(repeating: 0, count: ROMAT28C64B.size)
+        for address in addresses where System.romAddressSpace.contains(UInt16(address)) {
+            romData[address - Int(offset)] = data[address - Int(offset)]
+        }
+        rom.program(data: romData)
     }
     
     public func execute() -> (instruction: CPU6502.Instruction, oper: UInt8?, operWideHigh: UInt8?) {

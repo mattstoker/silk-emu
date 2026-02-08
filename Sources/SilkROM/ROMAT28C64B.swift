@@ -21,7 +21,7 @@ public struct ROMAT28C64B: Hashable {
         return memory[addressResolved]
     }
     
-    public mutating func program(data: [UInt8], startingAt offset: UInt16) {
+    public mutating func program<S: Collection>(data: S, startingAt offset: UInt16 = 0) where S.Element == UInt8, S.Index == Int {
         for dataIndex in data.indices {
             let memoryIndex = Int(offset + UInt16(dataIndex))
             guard memoryIndex < Self.size else {

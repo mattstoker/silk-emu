@@ -51,6 +51,7 @@ struct SystemView: View {
     @State var programImporterShowing = false
     @State var programFile: URL?
     @State var programOffset: Int = 0xE000
+    @State var programDisassembly: [CPU6502.Operation] = []
     @State var videoStart: UInt16? = 0x2000
     @State var videoEnd: UInt16? = 0x4000
     @State var videoLine: UInt16? = 0x80
@@ -63,24 +64,35 @@ struct SystemView: View {
     @State var aciaDataReceiveQueue: String = ""
     @State var aciaTransmitTimer: Timer? = nil
     @State var aciaDataTransmitQueue: String = ""
-    @State var disassembly: [CPU6502.Operation]
     @State var showVIAState: Bool = false
     @State var showLCDState: Bool = true
     @State var showControlPadState: Bool = true
     @State var showMemory: Bool = false
     @State var showVideo: Bool = true
     
-    struct MemoryEntry: Identifiable {
-        var address: UInt16
-        var value: UInt8
-        var id: Int { Int(address) }
-    }
-    
     var body: some View {
         HStack {
             VStack {
                 TextEditor(text: $log)
                     .font(.system(size: 12.0, design: .monospaced))
+                Table(programDisassembly) {
+                    TableColumn("Addr") {
+                        Text(String(format: "%04X", $0.address))
+                    }
+                    .width(40.0)
+                    TableColumn("Inst") {
+                        Text($0.instruction.name)
+                    }
+                    .width(40.0)
+                    TableColumn("OL") {
+                        Text($0.oper.map { String(format: "%02X", $0) } ?? "--")
+                    }
+                    .width(22.0)
+                    TableColumn("OH") {
+                        Text($0.operWideHigh.map { String(format: "%02X", $0) } ?? "--")
+                    }
+                    .width(22.0)
+                }
                 HStack {
                     Toggle("Video View", isOn: $showVideo)
                     TextField("Start", value: $videoStart, format: .hex).frame(width: 50)
@@ -118,7 +130,9 @@ struct SystemView: View {
                             var program: [UInt8] = Array(repeating: 0x00, count: programData.count)
                             programData.copyBytes(to: &program, count: min(program.count, programData.count))
                             
-                            system.program(data: program, startingAt: UInt16(programOffset - 0xE000))
+                            programDisassembly = CPU6502.disassemble(program: program, offset: UInt16(programOffset))
+                            
+                            system.program(data: program, startingAt: UInt16(programOffset))
                             system.executePublished()
                             log += "\(system.cpu.debugDescription)\n"
                         }
@@ -516,6 +530,18 @@ struct SystemView: View {
             .padding()
         }
     }
+}
+
+// MARK: - Memory Entry
+
+struct MemoryEntry: Identifiable {
+    var address: UInt16
+    var value: UInt8
+    var id: Int { Int(address) }
+}
+
+extension CPU6502.Operation: @retroactive Identifiable {
+    public var id: Int { Int(address) }
 }
 
 // MARK: - Hex Formatter
