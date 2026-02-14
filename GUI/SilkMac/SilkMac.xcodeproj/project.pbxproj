@@ -7,6 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C908894A2F40308400ABF9D3 /* ProgramView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90889492F402FB600ABF9D3 /* ProgramView.swift */; };
+		C908894C2F4031AE00ABF9D3 /* CPUView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C908894B2F4031A300ABF9D3 /* CPUView.swift */; };
+		C908894E2F40323100ABF9D3 /* ACIAView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C908894D2F40322E00ABF9D3 /* ACIAView.swift */; };
+		C90889502F40335400ABF9D3 /* VIAView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C908894F2F40335200ABF9D3 /* VIAView.swift */; };
+		C90889522F40343900ABF9D3 /* LCDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90889512F40343700ABF9D3 /* LCDView.swift */; };
+		C90889542F40347700ABF9D3 /* ControlPadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90889532F40347100ABF9D3 /* ControlPadView.swift */; };
+		C90889562F4034D300ABF9D3 /* VGAView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90889552F4034CF00ABF9D3 /* VGAView.swift */; };
+		C90889582F40380500ABF9D3 /* MemoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90889572F40380300ABF9D3 /* MemoryView.swift */; };
+		C908895A2F403CD400ABF9D3 /* HexFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90889592F403CD000ABF9D3 /* HexFormatter.swift */; };
+		C908895C2F404BCD00ABF9D3 /* ExecutionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C908895B2F404BCA00ABF9D3 /* ExecutionView.swift */; };
 		C92E69752F0B188700A37EC7 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = C92E69722F0B188700A37EC7 /* App.swift */; };
 		C92E69772F0B188700A37EC7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C92E69732F0B188700A37EC7 /* Assets.xcassets */; };
 		C9821CE82F1DB6AC001D39A1 /* SilkSystem in Frameworks */ = {isa = PBXBuildFile; productRef = C9821CE72F1DB6AC001D39A1 /* SilkSystem */; };
@@ -17,6 +27,16 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C90889492F402FB600ABF9D3 /* ProgramView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramView.swift; sourceTree = "<group>"; };
+		C908894B2F4031A300ABF9D3 /* CPUView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CPUView.swift; sourceTree = "<group>"; };
+		C908894D2F40322E00ABF9D3 /* ACIAView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ACIAView.swift; sourceTree = "<group>"; };
+		C908894F2F40335200ABF9D3 /* VIAView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VIAView.swift; sourceTree = "<group>"; };
+		C90889512F40343700ABF9D3 /* LCDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LCDView.swift; sourceTree = "<group>"; };
+		C90889532F40347100ABF9D3 /* ControlPadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlPadView.swift; sourceTree = "<group>"; };
+		C90889552F4034CF00ABF9D3 /* VGAView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VGAView.swift; sourceTree = "<group>"; };
+		C90889572F40380300ABF9D3 /* MemoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryView.swift; sourceTree = "<group>"; };
+		C90889592F403CD000ABF9D3 /* HexFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexFormatter.swift; sourceTree = "<group>"; };
+		C908895B2F404BCA00ABF9D3 /* ExecutionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecutionView.swift; sourceTree = "<group>"; };
 		C92E695D2F0B16FB00A37EC7 /* SilkMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SilkMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C92E69722F0B188700A37EC7 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		C92E69732F0B188700A37EC7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -43,6 +63,16 @@
 			isa = PBXGroup;
 			children = (
 				C92E69722F0B188700A37EC7 /* App.swift */,
+				C908895B2F404BCA00ABF9D3 /* ExecutionView.swift */,
+				C90889492F402FB600ABF9D3 /* ProgramView.swift */,
+				C908894B2F4031A300ABF9D3 /* CPUView.swift */,
+				C90889572F40380300ABF9D3 /* MemoryView.swift */,
+				C90889552F4034CF00ABF9D3 /* VGAView.swift */,
+				C908894D2F40322E00ABF9D3 /* ACIAView.swift */,
+				C908894F2F40335200ABF9D3 /* VIAView.swift */,
+				C90889512F40343700ABF9D3 /* LCDView.swift */,
+				C90889532F40347100ABF9D3 /* ControlPadView.swift */,
+				C90889592F403CD000ABF9D3 /* HexFormatter.swift */,
 				C92E69732F0B188700A37EC7 /* Assets.xcassets */,
 				C92E69742F0B188700A37EC7 /* SilkMac.entitlements */,
 				C9AE8ACF2F0B2031003B1AEA /* Frameworks */,
@@ -145,6 +175,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C90889582F40380500ABF9D3 /* MemoryView.swift in Sources */,
+				C90889542F40347700ABF9D3 /* ControlPadView.swift in Sources */,
+				C90889562F4034D300ABF9D3 /* VGAView.swift in Sources */,
+				C908895C2F404BCD00ABF9D3 /* ExecutionView.swift in Sources */,
+				C908894C2F4031AE00ABF9D3 /* CPUView.swift in Sources */,
+				C908895A2F403CD400ABF9D3 /* HexFormatter.swift in Sources */,
+				C908894A2F40308400ABF9D3 /* ProgramView.swift in Sources */,
+				C908894E2F40323100ABF9D3 /* ACIAView.swift in Sources */,
+				C90889502F40335400ABF9D3 /* VIAView.swift in Sources */,
+				C90889522F40343900ABF9D3 /* LCDView.swift in Sources */,
 				C92E69752F0B188700A37EC7 /* App.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
