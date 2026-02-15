@@ -11,12 +11,14 @@ extension CPU6502 {
         public let instruction: Instruction
         public let oper: UInt8?
         public let operWideHigh: UInt8?
+        public let symbols: [String]
         
-        public init(address: UInt16, instruction: Instruction, oper: UInt8? = nil, operWideHigh: UInt8? = nil) {
+        public init(address: UInt16, instruction: Instruction, oper: UInt8? = nil, operWideHigh: UInt8? = nil, symbols: [String] = []) {
             self.address = address
             self.instruction = instruction
             self.oper = oper
             self.operWideHigh = operWideHigh
+            self.symbols = symbols
         }
     }
     

@@ -31,6 +31,9 @@ struct ProgramView: View {
                     Text($0.operWideHigh.map { String(format: "%02X", $0) } ?? "--")
                 }
                 .width(22.0)
+                TableColumn("Symbols") {
+                    Text($0.symbols.joined(separator: " "))
+                }
             }
             .onChange(of: system.cpu.pc) { newValue, _ in
                 withAnimation {

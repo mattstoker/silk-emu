@@ -42,8 +42,8 @@ struct ExecutionView: View {
                         return
                     }
                     
-                    let (program, disassembly) = Self.parse(programData)
-                    programDisassembly = disassembly ?? CPU6502.disassemble(program: program, offset: UInt16(programOffset))
+                    let (program, disassembly) = Self.parse(programData, programOffset: UInt16(programOffset))
+                    programDisassembly = disassembly
                     system.program(data: program, startingAt: UInt16(programOffset))
                     system.executePublished()
                 }
@@ -120,7 +120,7 @@ struct ExecutionView: View {
 }
 
 extension ExecutionView {
-    static func parse(_ programData: Data) -> (program: [UInt8], disassembly: [CPU6502.Operation]?) {
+    static func parse(_ programData: Data, programOffset: UInt16) -> (program: [UInt8], disassembly: [CPU6502.Operation]) {
         // Examine header of program data
         let symbolicatedProgramHeader = "Sections:".utf8.map { UInt8($0) }
         var programHeader: [UInt8] = Array(repeating: 0x00, count: symbolicatedProgramHeader.count)
@@ -128,7 +128,7 @@ extension ExecutionView {
         
         // Based on the program header, parse the program
         let program: [UInt8]
-        let disassembly: [CPU6502.Operation]?
+        let disassembly: [CPU6502.Operation]
         if programHeader == symbolicatedProgramHeader {
             // Parse symbolicated program
             let source = String(data: programData, encoding: .utf8) ?? ""
@@ -136,49 +136,69 @@ extension ExecutionView {
                 .replacing("\r\n", with: "\n")
                 .split(separator: "\n", omittingEmptySubsequences: true)
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            let operationRegex = try! Regex("([1-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]): data\\(([0-9])\\): ([^\\n]+)")
+            let dataRegex = try! Regex("([1-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]): data\\(([0-9])\\): ([^\\n]+)")
             let symbolRegex = try! Regex("([1-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]): symbol: ([^ ]+)")
-            var operations: [UInt16: CPU6502.Operation] = [:]
-            var symbols: [UInt16: String] = [:]
+            var data: [UInt16: UInt8] = [:]
+            var symbols: [(address: UInt16, symbol: String)] = []
             for line in lines {
-                for operationMatch in line.matches(of: operationRegex) {
-                    guard let address = operationMatch[1].substring.map({ UInt16($0, radix: 16) }) ?? nil,
-                          let instructionLength = operationMatch[2].substring.map({ Int($0, radix: 16) }) ?? nil,
-                          let instructionData = operationMatch[3].substring?.split(separator: " ") else {
+                for dataMatch in line.matches(of: dataRegex) {
+                    guard let address = dataMatch[1].substring.map({ UInt16($0, radix: 16) }) ?? nil,
+                          let dataLength = dataMatch[2].substring.map({ Int($0, radix: 16) }) ?? nil,
+                          let dataBytesHex = dataMatch[3].substring?.split(separator: " ") else {
                         continue
                     }
-                    let instructionBytes = instructionData.compactMap { UInt8($0, radix: 16) }
-                    guard instructionLength >= 1,
-                          instructionBytes.count == instructionLength,
-                          let instruction = CPU6502.Instruction(rawValue: instructionBytes[0]) else {
+                    let dataBytes = dataBytesHex.compactMap { UInt8($0, radix: 16) }
+                    guard dataBytes.count == dataLength else {
                         continue
                     }
-                    let operation = CPU6502.Operation(
-                        address: address,
-                        instruction: instruction,
-                        oper: instructionBytes.count > 1 ? instructionBytes[1] : nil,
-                        operWideHigh: instructionBytes.count > 2 ? instructionBytes[2] : nil
-                    )
-                    operations[address] = operation
+                    for index in 0..<dataLength where Int(address) + index < Int(UInt16.max) {
+                        data[address + UInt16(index)] = dataBytes[index]
+                    }
                 }
                 for symbolMatch in line.matches(of: symbolRegex) {
                     guard let address = symbolMatch[1].substring.map({ UInt16($0, radix: 16) }) ?? nil,
                           let symbol = symbolMatch[2].substring else {
                         continue
                     }
-                    symbols[address] = String(symbol)
+                    symbols.append((address: address, symbol: String(symbol)))
                 }
             }
-            disassembly = Array(operations.values).sorted { $0.address < $1.address }
-            program = disassembly!.flatMap {
-                [$0.instruction.rawValue, $0.oper, $0.operWideHigh].compactMap { $0 }
-            }
+            
+            // Interpret the data as a program, honoring the requested offset
+            program = {
+                var programBytes = Array(repeating: UInt8(0x00), count: Int(UInt16.max) - Int(programOffset))
+                for (address, byte) in data {
+                    programBytes[Int(address - programOffset)] = byte
+                }
+                return programBytes
+            }()
+            
+            // Disassemble program, then combine operations and symbols
+            disassembly = {
+                var operations: [UInt16: CPU6502.Operation] = [:]
+                for operation in CPU6502.disassemble(program: program, offset: programOffset) {
+                    operations[operation.address] = operation
+                }
+                for (address, symbol) in symbols {
+                    guard let operation = operations[address] else { continue }
+                    var operationSymbols = operation.symbols
+                    operationSymbols.append(symbol)
+                    operations[address] = .init(
+                        address: operation.address,
+                        instruction: operation.instruction,
+                        oper: operation.oper,
+                        operWideHigh: operation.operWideHigh,
+                        symbols: operationSymbols
+                    )
+                }
+                return operations.values.sorted { $0.address < $1.address }
+            }()
         } else {
             // Read the program data directly as a binary program
             var programBytes = Array(repeating: UInt8(0x00), count: programData.count)
             programData.copyBytes(to: &programBytes, count: min(programBytes.count, programData.count))
             program = programBytes
-            disassembly = nil
+            disassembly = CPU6502.disassemble(program: program, offset: UInt16(programOffset))
         }
         return (program: program, disassembly: disassembly)
     }
