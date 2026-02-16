@@ -53,11 +53,11 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "/Users/Matt/Engineering/Generic/SilkEmu/ROM/hello.bin"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/Matt/Engineering/Generic/SilkEmu/ROM/serial.bin"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/Matt/Engineering/Generic/SilkEmu/ROM/jamantaos.bin"
@@ -65,11 +65,11 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--acia-receive-file /dev/stdin"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--acia-transmit-file /dev/stdout"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--print-state"
@@ -77,7 +77,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--print-lcd"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--realtime-ratio 1.0"

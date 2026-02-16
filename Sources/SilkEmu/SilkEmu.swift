@@ -59,7 +59,7 @@ struct SilkEmu: ParsableCommand {
         
         // Create a system and load the program into it
         let system = System()
-        system.program(data: program, startingAt: 0x0000)
+        system.program(data: program, startingAt: System.romAddressSpace.lowerBound)
         
         // Open files being used for ACIA transmit / receive
         let aciaReceiveStream = aciaReceiveFile.map { fopen($0, "r") } ?? nil
