@@ -4,7 +4,6 @@ on: [push]
 jobs:
   Mac:
     runs-on: macos-latest
-
     steps:
       - uses: actions/checkout@v5
       
@@ -20,6 +19,6 @@ jobs:
           tar -czvf silk-emu.tar.gz silk-emu ROM
 
       - name: Release
-        uses: actions/upload-artifact@v4
-        with:
-          path: silk-emu.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.event.release.tag_name }} ./silk-emu.tar.gz
