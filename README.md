@@ -1,6 +1,6 @@
 # silk-emu
 
-6502 CPU Emulation
+![CGOL Emulation](cgol-emulation.png "6502 CPU Emulation")
 
 ## Description
 
