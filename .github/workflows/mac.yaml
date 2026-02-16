@@ -1,5 +1,8 @@
 name: Mac
-on: [push]
+on:
+    push:
+    pull_request:
+    release:
 
 jobs:
   Mac:
