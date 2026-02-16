@@ -96,7 +96,9 @@ public class System {
         rom: Bool = false,
         via: Bool = true,
         acia: Bool = true,
-        lcd: Bool = true
+        lcd: Bool = true,
+        controlPad: Bool = true,
+        breakpoints: Bool = true
     ) {
         if cpu {
             self.cpu = CPU6502(load: self.cpu.load, store: self.cpu.store)
@@ -115,6 +117,12 @@ public class System {
         }
         if lcd {
             self.lcd = LCDHD44780()
+        }
+        if controlPad {
+            self.controlPad = ControlPad()
+        }
+        if breakpoints {
+            self.breakpoints = []
         }
     }
     
