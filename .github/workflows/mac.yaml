@@ -9,7 +9,17 @@ jobs:
       - uses: actions/checkout@v5
       
       - name: Build
-        run: swift build
+        run: swift build -c release
         
       - name: Test
-        run: swift test
+        run: swift test -c release
+
+      - name: Package
+        run:
+          cp .build/release/silk-emu ./
+          tar -czvf silk-emu.tar.gz silk-emu ROM
+
+      - name: Release
+        uses: actions/upload-artifact@v4
+        with:
+          path: silk-emu.tar.gz
