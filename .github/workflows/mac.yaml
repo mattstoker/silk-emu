@@ -19,6 +19,7 @@ jobs:
           tar -czvf silk-emu.tar.gz silk-emu ROM
 
       - name: Release
+        if: github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload ${{ github.event.release.tag_name }} ./silk-emu.tar.gz
