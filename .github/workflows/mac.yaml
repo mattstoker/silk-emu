@@ -10,19 +10,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       
-      - name: Build
-        run: swift build -c release
-        
-      - name: Test
+      - name: Build & Test
         run: swift test -c release
-
+        
       - name: Package
         run: |
           cp .build/release/silk-emu .
-          tar -czvf silk-emu.tar.gz silk-emu ROM
+          tar -czvf silk-emu-macos.tar.gz silk-emu ROM
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          path: silk-emu-macos.tar.gz
 
       - name: Release
         if: github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.event.release.tag_name }} ./silk-emu.tar.gz
+        run: gh release upload ${{ github.event.release.tag_name }} ./silk-emu-macos.tar.gz
