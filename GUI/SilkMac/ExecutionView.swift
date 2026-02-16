@@ -116,14 +116,14 @@ extension ExecutionView {
                 .replacing("\r\n", with: "\n")
                 .split(separator: "\n", omittingEmptySubsequences: true)
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            let dataRegex = try! Regex("([1-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]): data\\(([0-9])\\): ([^\\n]+)")
+            let dataRegex = try! Regex("([1-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]): data\\(([1-9][0-9]?)\\): ([^\\n]+)")
             let symbolRegex = try! Regex("([1-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]): symbol: ([^ ]+)")
             var data: [UInt16: UInt8] = [:]
             var symbols: [(address: UInt16, symbol: String)] = []
             for line in lines {
                 for dataMatch in line.matches(of: dataRegex) {
                     guard let address = dataMatch[1].substring.map({ UInt16($0, radix: 16) }) ?? nil,
-                          let dataLength = dataMatch[2].substring.map({ Int($0, radix: 16) }) ?? nil,
+                          let dataLength = dataMatch[2].substring.map({ Int($0) }) ?? nil,
                           let dataBytesHex = dataMatch[3].substring?.split(separator: " ") else {
                         continue
                     }
