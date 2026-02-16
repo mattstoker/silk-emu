@@ -15,6 +15,25 @@ struct ProgramView: View {
     var body: some View {
         ScrollViewReader { proxy in
             Table(programDisassembly) {
+                TableColumn("BP") { operation in
+                    Toggle(
+                        isOn: .init(
+                            get: {
+                                system.breakpoints.contains(operation.address)
+                            },
+                            set: { isOn in
+                                if isOn {
+                                    system.breakpoints.insert(operation.address)
+                                } else {
+                                    system.breakpoints.remove(operation.address)
+                                }
+                                system.objectWillChange.send()
+                            }
+                        ),
+                        label: { Text("") }
+                    )
+                }
+                .width(22.0)
                 TableColumn("Addr") {
                     Text(String(format: "%04X\($0.address == system.cpu.pc ? "*" : "")", $0.address))
                 }

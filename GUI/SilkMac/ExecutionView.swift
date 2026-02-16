@@ -16,9 +16,7 @@ struct ExecutionView: View {
     @State var programOffset: Int = 0xE000
     @Binding var programDisassembly: [CPU6502.Operation]
     
-    @State var stepCount: Int? = nil
     @State var stepTimer: Timer? = nil
-    @State var breakpoint: UInt16? = nil
     
     var body: some View {
         switch system.cpu.state {
@@ -49,48 +47,30 @@ struct ExecutionView: View {
                 }
             }
         case .run:
+            if let programName = programFile?.lastPathComponent {
+                Text(programName)
+            }
             if stepTimer == nil {
                 HStack {
                     Button(
                         action: {
-                            if let breakpoint = breakpoint {
-                                system.executePublished(until: breakpoint)
-                            } else {
+                            if system.breakpoints.isEmpty {
                                 stepTimer = Timer.scheduledTimer(withTimeInterval: 0.0001, repeats: true) { _ in
                                     system.executePublished()
                                 }
+                            } else {
+                                system.runPublished()
                             }
                         },
-                        label: { Text("Run\(breakpoint == nil ? "" : " until 0x")") }
-                    )
-                    TextField("Break", value: $breakpoint, format: .hex)
-                        .frame(width: 50)
-                }
-                HStack {
-                    Button(
-                        action: {
-                            system.executePublished(count: stepCount ?? 1)
-                        },
-                        label: { Text("Step\(stepCount == nil ? "" : " 0x")") }
-                    )
-                    TextField("Steps", value: $stepCount, format: .hex)
-                        .frame(width: 50)
-                }
-                HStack {
-                    Button(
-                        action: {
-                            system.executePublished(upTo: CPU6502.Instruction.JSR_abs.opcode)
-                        },
-                        label: { Text("Step Until Next JSR") }
+                        label: { Text("Run\(system.breakpoints.isEmpty ? "" : " to breakpoint(s)")") }
                     )
                 }
                 HStack {
                     Button(
                         action: {
-                            system.executePublished(upTo: CPU6502.Instruction.RTS_impl.opcode)
                             system.executePublished()
                         },
-                        label: { Text("Step After Next RTS") }
+                        label: { Text("Step") }
                     )
                 }
                 Button(

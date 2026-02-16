@@ -27,6 +27,7 @@ public class System {
     public var acia: ACIA6551
     public var lcd: LCDHD44780
     public var controlPad: ControlPad
+    public var breakpoints: Set<UInt16>
     
     public init() {
         cpu = CPU6502()
@@ -36,6 +37,7 @@ public class System {
         acia = ACIA6551()
         lcd = LCDHD44780()
         controlPad = ControlPad()
+        breakpoints = []
         
         cpu = CPU6502(
             load: { address in
@@ -135,19 +137,16 @@ public class System {
     public func execute(count: Int) {
         for _ in 0..<count {
             cpu.execute()
+            if breakpoints.contains(cpu.pc) {
+                break
+            }
         }
     }
     
-    public func execute(until breakpoint: UInt16) {
+    public func run() {
         repeat {
             cpu.execute()
-        } while cpu.pc != breakpoint
-    }
-    
-    public func execute(upTo opcode: UInt8) {
-        repeat {
-            cpu.execute()
-        } while cpu.load(cpu.pc) != opcode
+        } while !breakpoints.contains(cpu.pc)
     }
 }
 

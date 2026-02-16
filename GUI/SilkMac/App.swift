@@ -29,18 +29,9 @@ extension System: @retroactive ObservableObject {
         objectWillChange.send()
     }
     
-    public func executePublished(until breakpoint: UInt16) {
-        repeat {
-            cpu.execute()
-            objectWillChange.send()
-        } while cpu.pc != breakpoint
-    }
-    
-    public func executePublished(upTo opcode: UInt8) {
-        repeat {
-            cpu.execute()
-            objectWillChange.send()
-        } while cpu.load(cpu.pc) != opcode
+    public func runPublished() {
+        run()
+        objectWillChange.send()
     }
 }
 
@@ -50,10 +41,10 @@ struct SystemView: View {
     @EnvironmentObject var system: System
     @State var programDisassembly: [CPU6502.Operation] = []
     @State var showCPUState: Bool = true
-    @State var showACIAState: Bool = true
     @State var showVIAState: Bool = false
     @State var showLCDState: Bool = true
     @State var showControlPadState: Bool = true
+    @State var showACIAState: Bool = false
     @State var showMemory: Bool = false
     @State var showVGA: Bool = true
     
@@ -68,13 +59,6 @@ struct SystemView: View {
                 Toggle("CPU 6502", isOn: $showCPUState)
                 if showCPUState {
                     CPUView()
-                }
-                Spacer()
-                
-                // MARK: ACIA
-                Toggle("ACIA 6551", isOn: $showACIAState)
-                if showACIAState {
-                    ACIAView()
                 }
                 Spacer()
                 
@@ -96,6 +80,13 @@ struct SystemView: View {
                 Toggle("Control Pad", isOn: $showControlPadState)
                 if showControlPadState {
                     ControlPadView()
+                }
+                Spacer()
+                
+                // MARK: ACIA
+                Toggle("ACIA 6551", isOn: $showACIAState)
+                if showACIAState {
+                    ACIAView()
                 }
                 Spacer()
                 
