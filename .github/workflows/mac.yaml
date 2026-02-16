@@ -2,7 +2,7 @@ name: Mac
 on: [push]
 
 jobs:
-  build:
+  Mac:
     runs-on: macos-latest
 
     steps:
@@ -15,8 +15,8 @@ jobs:
         run: swift test -c release
 
       - name: Package
-        run:
-          cp .build/release/silk-emu ./
+        run: |
+          cp .build/release/silk-emu .
           tar -czvf silk-emu.tar.gz silk-emu ROM
 
       - name: Release
