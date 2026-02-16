@@ -19,7 +19,7 @@ struct SilkEmu: ParsableCommand {
     var programFile: String
     
     @Option(help: "Memory offset to use to load the input program into memory.")
-    var programOffset: Int = 0
+    var programOffset: Int = Int(System.romAddressSpace.lowerBound)
     
     @Option(help: "Frequency at which clock cycles should be fed to the system (in cycles / sec).")
     var clockFrequency: Double = 1_000_000.0
@@ -59,7 +59,7 @@ struct SilkEmu: ParsableCommand {
         
         // Create a system and load the program into it
         let system = System()
-        system.program(data: program, startingAt: System.romAddressSpace.lowerBound)
+        system.program(data: program, startingAt: UInt16(programOffset))
         
         // Open files being used for ACIA transmit / receive
         let aciaReceiveStream = aciaReceiveFile.map { fopen($0, "r") } ?? nil
