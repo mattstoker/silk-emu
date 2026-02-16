@@ -1,0 +1,31 @@
+name: Windows
+on:
+    push:
+    pull_request:
+    release:
+
+jobs:
+  Windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Build & Test
+        run: swift test -c release
+        
+      - name: Package
+        shell: bash
+        run: |
+          cp .build/release/silk-emu .
+          tar -cf silk-emu-windows.zip silk-emu ROM
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          path: silk-emu-windows.zip
+
+      - name: Release
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.event.release.tag_name }} ./silk-emu-windows.zip
