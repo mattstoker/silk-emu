@@ -19,13 +19,15 @@ It also provides emulation for the following devices and assembly of those devic
 
 A bread-board based hardware implementation of this system is excellently presented by Ben Eater at [eater.net/6502](https://eater.net/6502).
 
-## Running CLI from Binary Release
+## Running silk-emu CLI from Binary Release (macOS, Windows, Linux)
 
-* Download and decompress the package from a release for your OS (Windows, macOS, Linux)
+* Download and decompress the package from [releases](https://github.com/mattstoker/silk-emu/releases) for your OS (Windows, macOS, Linux)
 * Run `silk-emu` from a command line interface, which should provide details on using the program
 * Also see the Sample Software section below (replace `swift run silk-emu` with `./silk-emu`)
 
-## Building & Running CLI
+## Building & Running silk-emu CLI from Source (macOS, Windows, Linux)
+* Download and install Swift from [swift.org](https://swift.org)
+* Run a command line shell and execute:
 
 ```
 git clone https://github.com/mattstoker/silk-emu.git
@@ -33,7 +35,17 @@ cd silk-emu
 swift run
 ```
 
-## Sample Software
+## Building & Running macOS GUI
+* Download and install Xcode from [developer.apple.com](https://developer.apple.com/xcode/)
+* Run a command line shell and execute:
+
+```
+git clone https://github.com/mattstoker/silk-emu.git
+cd silk-emu
+open GUI/SilkMac/SilkMac.xcodeproj
+```
+
+## Sample 6502 Software
 
 The emulator (source or binary release) includes sample software written in 6502 assembly in the ROM directory:
 
