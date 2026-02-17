@@ -23,6 +23,7 @@ A bread-board based hardware implementation of this system is excellently presen
 
 * Download and decompress the package from [releases](https://github.com/mattstoker/silk-emu/releases) for your OS (Windows, macOS, Linux)
 * Run `silk-emu` from a command line interface, which should provide details on using the program
+* Your platform may require installation of the Swift runtime from [swift.org](https://swift.org)
 * Also see the Sample Software section below (replace `swift run silk-emu` with `./silk-emu`)
 
 ## Building & Running silk-emu CLI from Source (macOS, Windows, Linux)
