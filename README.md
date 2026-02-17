@@ -16,7 +16,13 @@ It also provides emulation for the following devices and assembly of those devic
 
 A bread-board based hardware implementation of this system is excellently presented by Ben Eater at [eater.net/6502](https://eater.net/6502).
 
-## Building & Running
+## Running CLI from Binary Release
+
+* Download and decompress the package from a release for your OS (Windows, macOS, Linux)
+* Run `silk-emu` from a command line interface, which should provide details on using the program
+* Also see the Sample Software section below (replace `swift run silk-emu` with `./silk-emu`)
+
+## Building & Running CLI
 
 ```
 git clone https://github.com/mattstoker/silk-emu.git
@@ -26,7 +32,7 @@ swift run
 
 ## Sample Software
 
-The emulator includes sample software written in 6502 assembly in the ROM directory:
+The emulator (source or binary release) includes sample software written in 6502 assembly in the ROM directory:
 
 * hello.s - A hello-world style program that prints to the LCD
   - `swift run silk-emu ROM/hello.bin --print-lcd`

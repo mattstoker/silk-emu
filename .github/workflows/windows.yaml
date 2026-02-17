@@ -11,6 +11,10 @@ jobs:
       - uses: actions/checkout@v5
       
       - name: Build & Test
+      - uses: compnerd/gha-setup-swift@main
+        with:
+          swift-version: swift-6.2-release
+          swift-build: 6.2-RELEASE
         run: swift test -c release
         
       - name: Package
