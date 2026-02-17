@@ -1,6 +1,9 @@
 # silk-emu
 
 ![CGOL Emulation](cgol-emulation.png "6502 CPU Emulation")
+[![Mac](https://github.com/mattstoker/silk-emu/actions/workflows/mac.yaml/badge.svg?branch=main)](https://github.com/mattstoker/silk-emu/actions/workflows/mac.yaml)
+[![Windows](https://github.com/mattstoker/silk-emu/actions/workflows/windows.yaml/badge.svg?branch=main)](https://github.com/mattstoker/silk-emu/actions/workflows/windows.yaml)
+[![Linux](https://github.com/mattstoker/silk-emu/actions/workflows/linux.yaml/badge.svg?branch=main)](https://github.com/mattstoker/silk-emu/actions/workflows/linux.yaml)
 
 ## Description
 
