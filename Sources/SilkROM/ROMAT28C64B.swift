@@ -10,6 +10,7 @@
 
 // MARK: ROM State & Equality
 
+/// AT28C64B Read-Only Memory emulation.
 public struct ROMAT28C64B: Hashable {
     public static let size = 0x2000
     public private(set) var memory: [UInt8] = Array(repeating: .zero, count: ROMAT28C64B.size)

@@ -10,6 +10,7 @@
 
 // MARK: VIA State & Equality
 
+/// W65C22 Versitile Interface Adapter emulation.
 public struct VIA6522: Hashable {
     public internal(set) var pa: UInt8
     public internal(set) var pb: UInt8

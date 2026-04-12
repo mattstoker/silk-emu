@@ -1,20 +1,19 @@
 // swift-tools-version: 6.0
 
 import PackageDescription
+import Foundation
 
 let package = Package(
     name: "SilkEmu",
     products: [
-        .library(name: "SilkCPU", targets: ["SilkCPU"]),
-        .library(name: "SilkRAM", targets: ["SilkRAM"]),
-        .library(name: "SilkROM", targets: ["SilkROM"]),
-        .library(name: "SilkVIA", targets: ["SilkVIA"]),
-        .library(name: "SilkACIA", targets: ["SilkACIA"]),
-        .library(name: "SilkLCD", targets: ["SilkLCD"]),
-        .library(name: "SilkSystem", targets: ["SilkSystem"]),
+        .library(
+            name: "SilkSystem",
+            targets: ["SilkSystem"]
+        ),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
+        .package(url: "https://github.com/apple/swift-argument-parser.git", .upToNextMajor(from: "1.5.0")),
+        .package(url: "https://github.com/cricut/FishyJoes", .upToNextMajor(from: "7.0.0"))
     ],
     targets: [
         .executableTarget(

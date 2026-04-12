@@ -15,6 +15,13 @@ import Foundation
 
 // MARK: - CPU State & Equality
 
+/// W65C02 microprocessor emulation.
+///
+/// The W65C02 (compatible with its namesake, the 6502) has 6 registers and external connections for a 16-bit address bus and 8-bit data bus.
+/// These are these are represented in this type, enabling emulation of the processor, its instruction set, and connections to external memory and memory-mapped hardware.
+/// The processor registers are freely readable using the `pc`, `ac`, `xr`, `yr`, `sr`, and `sp` properties.
+/// Instruction fetch, decode, and execution are provided with the `execute()` method, with instructions provided via emulated memory access in the form of the `load` and `store` closures.
+/// State management for the processor is accomplished using the `stop()`, `wait()`, and `resume()` methods, and readable with the `state` property.
 public struct CPU6502 {
     public enum State {
         case boot

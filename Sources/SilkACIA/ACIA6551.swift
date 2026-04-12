@@ -10,6 +10,7 @@
 
 // MARK: ACIA State & Equality
 
+/// 65C51N serial interface emulation.
 public struct ACIA6551 {
     public internal(set) var sr: UInt8
     public internal(set) var ctl: UInt8

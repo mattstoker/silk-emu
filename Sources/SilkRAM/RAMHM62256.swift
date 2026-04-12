@@ -10,6 +10,7 @@
 
 // MARK: RAM State & Equality
 
+/// 62256 Random Access Memory emulation.
 public struct RAMHM62256: Hashable {
     public static let size = 0x4000
     public private(set) var memory: [UInt8] = Array(repeating: .zero, count: RAMHM62256.size)

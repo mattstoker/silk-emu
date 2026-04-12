@@ -11,6 +11,7 @@
 
 // MARK: LCD State & Equality
 
+/// HD44780 Liquid Crystal Display emulation.
 public struct LCDHD44780: Hashable {
     public static let ddramSize = 80
     public static let cgramSize = 64
