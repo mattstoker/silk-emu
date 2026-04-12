@@ -25,7 +25,7 @@ import SilkLCD
 /// * A generic 5-button control pad
 /// * AT28C64B Erasable Programmable Read-Only Memory
 ///
-/// <!-- FishyJoes.export(System) -->
+/// TODO: <!-- FishyJoes.export(System) -->
 public class System {
     public static let ramAddressSpace = (UInt16(0x0000)...UInt16(0x3FFF))
     public static let aciaAddressSpace = (UInt16(0x4000)...UInt16(0x5FFF))
@@ -41,7 +41,7 @@ public class System {
     public var controlPad: ControlPad
     public var breakpoints: Set<UInt16>
     
-    /// <!-- FishyJoes.export(create) -->
+    /// TODO: <!-- FishyJoes.export(create) -->
     public init() {
         cpu = CPU6502()
         ram = RAMHM62256()
@@ -104,7 +104,7 @@ public class System {
     }
     
     /// Resets the microprocessor, attached devices, and breakpoints to their known initial state.
-    /// <!-- FishyJoes.export(reset) -->
+    /// TODO: <!-- FishyJoes.export(reset) -->
     public func reset(
         cpu: Bool = true,
         ram: Bool = true,
@@ -144,7 +144,7 @@ public class System {
     /// Programs the attached RAM, ROM, and other programmable devices, with the provided data.
     /// - Parameter data: Data to use to program attached devices, with byte indices corresponding directly to the system address space `0x0000...0xFFFF`. Bytes at indices outside this address space are ignored.
     /// - Parameter offset: Offset to apply to the start index of `data`, allowing only portions of the system address space to be programmed.
-    /// <!-- FishyJoes.export(program) -->
+    /// TODO: <!-- FishyJoes.export(program) -->
     public func program(data: [UInt8], startingAt offset: UInt16 = 0) {
         let addresses = Int(offset)..<(Int(offset) + data.count)
         for address in addresses where System.ramAddressSpace.contains(UInt16(address)) {
@@ -163,7 +163,7 @@ public class System {
     
     /// Fetches instructions from the data bus at the address in the program counter, and executes them.
     /// - Parameter count: The number of instructions to fetch and execute.
-    /// <!-- FishyJoes.export(execute) -->
+    /// TODO: <!-- FishyJoes.export(execute) -->
     public func execute(count: Int) {
         for _ in 0..<count {
             cpu.execute()
@@ -175,14 +175,14 @@ public class System {
     
     /// Fetches and executes instructions until a breakpoint is reached or the processor executes a stop instruction.
     /// - Parameter breakpoints: Set of addresses that, if the program counter reaches, will halt execution. If provided, replaces any breakpoints already given to the system.
-    /// <!-- FishyJoes.export(run) -->
+    /// TODO: <!-- FishyJoes.export(run) -->
     public func run(breakpoints: Set<UInt16>? = nil) {
         if let breakpoints = breakpoints {
             self.breakpoints = breakpoints
         }
         repeat {
             cpu.execute()
-        } while !breakpoints.contains(cpu.pc)
+        } while !self.breakpoints.contains(cpu.pc)
     }
 }
 
@@ -207,7 +207,7 @@ extension System {
     /// - Parameter line: Frequency with which the rendered pixels are broken into lines.
     /// - Parameter channelMaxValue: The highest value for a color channel in the PPM.
     /// - Parameter valueChannelConverter: A closure that converts a byte in memory to RGB color channels. If `nil`, implements RGB222.
-    /// <!-- FishyJoes.export(memoryPPM) -->
+    /// TODO: <!-- FishyJoes.export(memoryPPM) -->
     public func memoryPPM(
         start: UInt16 = .min,
         end: UInt16 = .max,
@@ -215,7 +215,9 @@ extension System {
         channelMaxValue: UInt8 = 3,
         valueChannelConverter: ((UInt8) -> (UInt8, UInt8, UInt8))? = nil
     ) -> String {
-        let valueChannelConverter = valueChannelConverter ?? { (($0 & 0b00000011) >> 0, ($0 & 0b00001100) >> 2, ($0 & 0b00110000) >> 4) }
+        let valueChannelConverter = valueChannelConverter ?? { (c: UInt8) -> (UInt8, UInt8, UInt8) in
+            ((c & 0b00000011) >> 0, (c & 0b00001100) >> 2, (c & 0b00110000) >> 4)
+        }
         let count = Int(min(end, UInt16.max)) - Int(min(start, min(end, UInt16.max)))
         let width = Int(line)
         let height = Int((Double(count) / Double(width)).rounded(.up))

@@ -1,0 +1,6 @@
+module: SilkEmu
+publishRepository: github.com/mattstoker/SilkEmu
+requiredModules: []
+extraDynamicLibraries: []
+excludeSources: []
+flexibleVersions: false
